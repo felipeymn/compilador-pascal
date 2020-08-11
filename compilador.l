@@ -6,11 +6,10 @@
 
 #include "compilador.h"
 #include "compilador.tab.h"
-
 //#define IMPRIME(STR) {};
 #define IMPRIME(STR) printf("%s    # %s \n", STR, token);
 
-int nl = 1;  
+int nl = 1;
 
 %}
 
@@ -189,6 +188,39 @@ not { simbolo = simb_not;
           return IDENT;
         }
 
+   /*******************************************/
+  /*        Simbolos Adicionais              */
+ /*******************************************/
+
+{numero} { simbolo = simb_numero; 
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" numero  ");
+          return NUMERO;
+        }
+
+\+  { simbolo = simb_adicao;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" adicao ");
+          return ADICAO;
+ }
+
+ \-  { simbolo = simb_subtracao;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" subtracao ");
+          return SUBTRACAO;
+ }
+
+ \*  { simbolo = simb_multiplicacao;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" multiplicacao ");
+          return MULTIPLICACAO;
+ }
+
+ \/  { simbolo = simb_divisao;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" divisao ");
+          return DIVISAO;
+ }
 
 %%
 

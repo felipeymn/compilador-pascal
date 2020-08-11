@@ -1,6 +1,6 @@
 
-// Testar se funciona corretamente o empilhamento de parâmetros
-// passados por valor ou por referência.
+// Testar se funciona corretamente o empilhamento de parï¿½metros
+// passados por valor ou por referï¿½ncia.
 
 
 %{
@@ -10,14 +10,21 @@
 #include <string.h>
 #include "compilador.h"
 
-int num_vars;
+
+unsigned int num_vars;
+Tabela *tab_simb;
+EnderecoLexico end_lex;
+char token_atual[TAM_TOKEN];
 
 %}
 
 %token PROGRAM ABRE_PARENTESES FECHA_PARENTESES 
 %token VIRGULA PONTO_E_VIRGULA DOIS_PONTOS PONTO
 %token T_BEGIN T_END VAR IDENT ATRIBUICAO
-
+/*** Aula 2  ***/
+%token LABEL TYPE ARRAY OF PROCEDURE FUNCTION
+%token IF ELSE WHILE DO OR DIV NOT NUMERO
+%token ADICAO SUBTRACAO MULTIPLICACAO DIVISAO
 %%
 
 programa    :{ 
@@ -36,14 +43,13 @@ bloco       :
               }
 
               comando_composto 
-              ;
+;
 
 
 
 
 parte_declara_vars:  var 
 ;
-
 
 var         : { } VAR declara_vars
             |
@@ -56,29 +62,76 @@ declara_vars: declara_vars declara_var
 declara_var : { } 
               lista_id_var DOIS_PONTOS 
               tipo 
-              { /* AMEM */
+              {              
+                 geraCodigo (NULL, "AMEM"); 
               }
               PONTO_E_VIRGULA
 ;
 
-tipo        : IDENT
+tipo        : IDENT {
+               /* Recebe identificador do tipo em token
+                  Percorre a tabela preenchendo as num_vars anteriores */
+               define_tipo(tab_simb, token, num_vars);
+               num_vars = 0;
+            }
 ;
 
-lista_id_var: lista_id_var VIRGULA IDENT 
-              { /* insere última vars na tabela de símbolos */ }
-            | IDENT { /* insere vars na tabela de símbolos */}
+lista_id_var:  lista_id_var VIRGULA IDENT { 
+               /* Insere simbolo (var) na tabela mantendo tipo indefinido */
+               strncpy(token_atual, token, TAM_TOKEN);
+               insere(tab_simb, cria_simbolo(token_atual, "undefined", end_lex));
+               end_lex.deslocamento++;
+               num_vars++;
+}
+            | IDENT {              
+               /* Insere simbolo (var) na tabela mantendo tipo indefinido */
+               strncpy(token_atual, token, TAM_TOKEN);
+               insere(tab_simb, cria_simbolo(token, "undefined", end_lex));
+               end_lex.deslocamento++;
+               num_vars++;
+            }
 ;
 
 lista_idents: lista_idents VIRGULA IDENT  
-            | IDENT
+            | IDENT 
 ;
-
 
 comando_composto: T_BEGIN comandos T_END 
 
-comandos:    
+comandos: atribuicao |
 ;
 
+atribuicao: IDENT {
+   if (busca(tab_simb, token) == NULL) {
+       char err_atrib[100] = "atribuicao invalida: variavel '";
+       strcat(err_atrib, token);
+       strcat(err_atrib, "' nao existe");
+       imprimeErro(err_atrib);
+   }
+} ATRIBUICAO lista_atribuicao PONTO_E_VIRGULA 
+;
+
+lista_atribuicao: lista_atribuicao operacao const_ou_var | const_ou_var
+;
+
+const_ou_var: IDENT {
+      if (busca(tab_simb, token) == NULL) {
+      char err_atrib[100] = "atribuicao invalida: variavel '";
+      strcat(err_atrib, token);
+      strcat(err_atrib, "' nao existe");
+      imprimeErro(err_atrib);
+   } 
+} | NUMERO {
+   geraCodigo(NULL, "CRCT");
+}
+;
+
+operacao: 
+     ADICAO        { geraCodigo(NULL, "SOMA"); } 
+   | SUBTRACAO     { geraCodigo(NULL, "SUBT"); }
+   | MULTIPLICACAO { geraCodigo(NULL, "MULT"); } 
+   | DIVISAO       { geraCodigo(NULL, "DIVI"); }
+;
 
 %%
 
@@ -99,11 +152,15 @@ main (int argc, char** argv) {
 
 
 /* -------------------------------------------------------------------
- *  Inicia a Tabela de Símbolos
+ *  Inicia a Tabela de Sï¿½mbolos
  * ------------------------------------------------------------------- */
-
+   tab_simb = cria_tabela();
+   num_vars = 0;
+   end_lex.nivel = 0;
+   end_lex.deslocamento = 0;
    yyin=fp;
    yyparse();
+   imprime_tabela(tab_simb);
 
    return 0;
 }
