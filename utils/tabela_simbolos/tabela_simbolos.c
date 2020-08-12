@@ -61,9 +61,9 @@ void imprime_tabela(Tabela *t) {
     }
 }
 
-void define_tipo(Tabela *t, char *tipo, unsigned int num_vars) {
+void define_tipo(Tabela *t, char *tipo, int num_vars) {
     Simbolo *atual = t->cabeca;
-    for (unsigned int i = 0; i < num_vars; i++) {
+    for (int i = 0; i < num_vars; i++) {
         if (atual != NULL) {
             atual->tipo = malloc(sizeof(tipo));
             strcpy(atual->tipo, tipo);

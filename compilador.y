@@ -9,12 +9,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include "compilador.h"
+#include "utils/funcoes_auxiliares/compiladorF.h"
 
 
-unsigned int num_vars;
+int num_vars;
 Tabela *tab_simb;
 EnderecoLexico end_lex;
 char token_atual[TAM_TOKEN];
+int yylex();
+void yyerror(const char *s);
 
 %}
 
@@ -27,69 +30,57 @@ char token_atual[TAM_TOKEN];
 %token ADICAO SUBTRACAO MULTIPLICACAO DIVISAO
 %%
 
-programa    :{ 
-             geraCodigo (NULL, "INPP"); 
-             }
-             PROGRAM IDENT 
-             ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA
-             bloco PONTO {
-             geraCodigo (NULL, "PARA"); 
-             }
+programa: { 
+      geraCodigo (NULL, "INPP");
+   }
+   PROGRAM IDENT 
+   ABRE_PARENTESES lista_idents FECHA_PARENTESES PONTO_E_VIRGULA
+   bloco PONTO {
+      geraCodigo (NULL, "PARA"); 
+   }
 ;
 
-bloco       : 
-              parte_declara_vars
-              { 
-              }
-
-              comando_composto 
+bloco: parte_declara_vars comando_composto 
 ;
 
-
-
-
-parte_declara_vars:  var 
+parte_declara_vars: var 
 ;
 
-var         : { } VAR declara_vars
-            |
+var: VAR declara_vars
+   |
 ;
 
 declara_vars: declara_vars declara_var 
             | declara_var 
 ;
 
-declara_var : { } 
-              lista_id_var DOIS_PONTOS 
-              tipo 
-              {              
-                 geraCodigo (NULL, "AMEM"); 
-              }
-              PONTO_E_VIRGULA
+declara_var: lista_id_var DOIS_PONTOS tipo PONTO_E_VIRGULA
 ;
 
-tipo        : IDENT {
-               /* Recebe identificador do tipo em token
-                  Percorre a tabela preenchendo as num_vars anteriores */
-               define_tipo(tab_simb, token, num_vars);
-               num_vars = 0;
-            }
+tipo: IDENT {
+      /* Recebe identificador do tipo em token
+         Percorre a tabela preenchendo as num_vars anteriores */
+      define_tipo(tab_simb, token, num_vars);
+      // printf("SAIDA = %s\n", );
+      geraCodigo (NULL, formataInstrucaoComposta("AMEM", num_vars));
+      num_vars = 0;
+   }
 ;
 
-lista_id_var:  lista_id_var VIRGULA IDENT { 
-               /* Insere simbolo (var) na tabela mantendo tipo indefinido */
-               strncpy(token_atual, token, TAM_TOKEN);
-               insere(tab_simb, cria_simbolo(token_atual, "undefined", end_lex));
-               end_lex.deslocamento++;
-               num_vars++;
-}
-            | IDENT {              
-               /* Insere simbolo (var) na tabela mantendo tipo indefinido */
-               strncpy(token_atual, token, TAM_TOKEN);
-               insere(tab_simb, cria_simbolo(token, "undefined", end_lex));
-               end_lex.deslocamento++;
-               num_vars++;
-            }
+lista_id_var: lista_id_var VIRGULA IDENT { 
+      /* Insere simbolo (var) na tabela mantendo tipo indefinido */
+      strncpy(token_atual, token, TAM_TOKEN);
+      insere(tab_simb, cria_simbolo(token_atual, "undefined", end_lex));
+      end_lex.deslocamento++;
+      num_vars++;
+   }
+   | IDENT {              
+      /* Insere simbolo (var) na tabela mantendo tipo indefinido */
+      strncpy(token_atual, token, TAM_TOKEN);
+      insere(tab_simb, cria_simbolo(token, "undefined", end_lex));
+      end_lex.deslocamento++;
+      num_vars++;
+   }
 ;
 
 lista_idents: lista_idents VIRGULA IDENT  
@@ -97,33 +88,42 @@ lista_idents: lista_idents VIRGULA IDENT
 ;
 
 comando_composto: T_BEGIN comandos T_END 
+;
 
-comandos: atribuicao |
+comandos: atribuicao 
+        |
 ;
 
 atribuicao: IDENT {
-   if (busca(tab_simb, token) == NULL) {
-       char err_atrib[100] = "atribuicao invalida: variavel '";
-       strcat(err_atrib, token);
-       strcat(err_atrib, "' nao existe");
-       imprimeErro(err_atrib);
-   }
-} ATRIBUICAO lista_atribuicao PONTO_E_VIRGULA 
+      if (busca(tab_simb, token) == NULL) {
+         char err_atrib[100] = "atribuicao invalida: variavel '";
+         strcat(err_atrib, token);
+         strcat(err_atrib, "' nao existe");
+         imprimeErro(err_atrib);
+      }
+   } 
+   ATRIBUICAO lista_atribuicao PONTO_E_VIRGULA 
 ;
 
-lista_atribuicao: lista_atribuicao operacao const_ou_var | const_ou_var
+lista_atribuicao: lista_atribuicao operacao const_ou_var {
+
+   }
+                | const_ou_var
 ;
 
 const_ou_var: IDENT {
-      if (busca(tab_simb, token) == NULL) {
-      char err_atrib[100] = "atribuicao invalida: variavel '";
-      strcat(err_atrib, token);
-      strcat(err_atrib, "' nao existe");
-      imprimeErro(err_atrib);
+      Simbolo *s = busca(tab_simb, token);
+      /* Caso nao encontrar variavel na tabela de simbolos, imprime erro*/
+      if (s == NULL) {
+         char err_atrib[100] = "atribuicao invalida: variavel '";
+         strcat(err_atrib, token);
+         strcat(err_atrib, "' nao existe");
+         imprimeErro(err_atrib);
+      }
    } 
-} | NUMERO {
-   geraCodigo(NULL, "CRCT");
-}
+   | NUMERO {
+      geraCodigo(NULL, "CRCT");
+   }
 ;
 
 operacao: 
@@ -135,7 +135,7 @@ operacao:
 
 %%
 
-main (int argc, char** argv) {
+int main (int argc, char** argv) {
    FILE* fp;
    extern FILE* yyin;
 
@@ -150,7 +150,6 @@ main (int argc, char** argv) {
       return(-1);
    }
 
-
 /* -------------------------------------------------------------------
  *  Inicia a Tabela de S�mbolos
  * ------------------------------------------------------------------- */
@@ -161,7 +160,7 @@ main (int argc, char** argv) {
    yyin=fp;
    yyparse();
    imprime_tabela(tab_simb);
-
+   
    return 0;
 }
 

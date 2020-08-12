@@ -202,25 +202,25 @@ not { simbolo = simb_not;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" adicao ");
           return ADICAO;
- }
+}
 
- \-  { simbolo = simb_subtracao;  
+\-  { simbolo = simb_subtracao;  
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" subtracao ");
           return SUBTRACAO;
  }
 
- \*  { simbolo = simb_multiplicacao;  
+\*  { simbolo = simb_multiplicacao;  
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" multiplicacao ");
           return MULTIPLICACAO;
- }
+}
 
- \/  { simbolo = simb_divisao;  
+\/  { simbolo = simb_divisao;  
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" divisao ");
           return DIVISAO;
- }
+}
 
 %%
 

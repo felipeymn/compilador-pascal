@@ -10,7 +10,7 @@
  * Tipos, prot�tipos e vai�veis globais do compilador
  *
  * ------------------------------------------------------------------- */
-#include "tabela_simbolos.h"
+#include "utils/tabela_simbolos/tabela_simbolos.h"
 
 typedef enum simbolos {
     simb_program,

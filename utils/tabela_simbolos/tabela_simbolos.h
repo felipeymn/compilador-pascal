@@ -26,6 +26,5 @@ void insere(Tabela *t, Simbolo *s);
 void retira(Tabela *t);
 Simbolo *busca(Tabela *t, char *id);
 void imprime_tabela(Tabela *t);
-void define_tipo(Tabela *t, char *tipo, unsigned int num_vars);
-
+void define_tipo(Tabela *t, char *tipo, int num_vars);
 #endif

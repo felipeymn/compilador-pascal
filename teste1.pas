@@ -5,6 +5,5 @@ var
   tamandua, mamute, cegonha, jacare: boolean;
 
 begin
-pera := 10 * 10;
 end.
 

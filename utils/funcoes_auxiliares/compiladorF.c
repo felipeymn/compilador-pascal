@@ -12,17 +12,19 @@
  *
  * ------------------------------------------------------------------- */
 
+#include "compiladorF.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "compilador.h"
-
+#include "../../compilador.h"
 /* -------------------------------------------------------------------
  *  vari�veis globais
  * ------------------------------------------------------------------- */
 
 FILE* fp = NULL;
+
 void geraCodigo(char* rot, char* comando) {
     if (fp == NULL) {
         fp = fopen("MEPA", "w");
@@ -40,4 +42,21 @@ void geraCodigo(char* rot, char* comando) {
 int imprimeErro(char* erro) {
     fprintf(stderr, "Erro na linha %d - %s\n", nl, erro);
     exit(-1);
+}
+
+int contaDigitos(int valor) {
+    int i = 0;
+    while (valor != 0) {
+        valor /= 10;
+        ++i;
+    }
+    return i;
+}
+
+char* formataInstrucaoComposta(char* instrucao, int complemento) {
+    int tamanho = strlen(instrucao) + contaDigitos(complemento) + 2;
+    char* instrucao_composta = malloc(tamanho);
+    snprintf(instrucao_composta, tamanho, "%s %d", instrucao, complemento);
+
+    return instrucao_composta;
 }
