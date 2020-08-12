@@ -4,3 +4,4 @@ lex.yy.c
 compilador.tab*
 compilador.output
 MEPA
+.vscode
