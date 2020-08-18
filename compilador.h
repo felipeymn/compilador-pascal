@@ -43,7 +43,16 @@ typedef enum simbolos {
     simb_adicao,
     simb_subtracao,
     simb_multiplicacao,
-    simb_divisao
+    simb_divisao,
+    simb_igual,
+    simb_desigual,
+    simb_menor,
+    simb_menor_igual,
+    simb_maior,
+    simb_maior_igual,
+    simb_abre_colchetes,
+    simb_fecha_colchetes,
+    simb_conjuncao
 } simbolos;
 
 /* -------------------------------------------------------------------

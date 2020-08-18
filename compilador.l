@@ -222,5 +222,61 @@ not { simbolo = simb_not;
           return DIVISAO;
 }
 
+\=  { simbolo = simb_igual;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" igual ");
+          return IGUAL;
+}
+
+\<>  { simbolo = simb_desigual;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" DESIGUAL ");
+          return DESIGUAL;
+}
+
+\< { simbolo = simb_menor;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" menor ");
+          return MENOR;
+}
+
+\<= { simbolo = simb_menor_igual;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" MENOR IGUAL ");
+          return MENOR_IGUAL;
+}
+
+\> { simbolo = simb_maior;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" MAIOR ");
+          return MAIOR;
+}
+
+\>= { simbolo = simb_maior_igual;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" MAIOR IGUAL ");
+          return MAIOR_IGUAL; 
+}
+
+\[ { simbolo = simb_abre_colchetes;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" ABRE_COLCHETES ");
+          return ABRE_COLCHETES;
+}
+
+conjuncao { simbolo = simb_conjuncao;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" CONJUNCAO ");
+          return CONJUNCAO;
+}
+
+\] { simbolo = simb_fecha_colchetes;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" FECHA COLCHETES ");
+          return FECHA_COLCHETES;
+}
+
+
+
 %%
 
