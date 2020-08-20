@@ -20,21 +20,23 @@ Simbolo *cria_simbolo(char id[TAM_TOKEN], char *t, EnderecoLexico e) {
     strncpy(s->id, id, TAM_TOKEN);
     s->tipo = t;
     s->endereco_lexico = e;
-    s->next = NULL;
+    s->proximo = NULL;
     return s;
 }
 
 void insere(Tabela *t, Simbolo *s) {
-    s->next = t->cabeca;
+    s->proximo = t->cabeca;
     t->cabeca = s;
     t->tamanho++;
 }
 
 void retira(Tabela *t) {
-    Simbolo *popped = t->cabeca;
-    t->cabeca = t->cabeca->next;
-    t->tamanho--;
-    free(popped);
+    Simbolo *retirado = t->cabeca;
+    while (retirado != NULL) {
+        t->cabeca = t->cabeca->proximo;
+        t->tamanho--;
+        free(retirado);
+    }
 }
 
 Simbolo *busca(Tabela *t, char *id) {
@@ -43,7 +45,7 @@ Simbolo *busca(Tabela *t, char *id) {
         if (strcmp(current->id, id) == 0) {
             break;
         }
-        current = current->next;
+        current = current->proximo;
     }
     return current;
 }
@@ -57,7 +59,7 @@ void imprime_tabela(Tabela *t) {
                current->endereco_lexico.deslocamento,
                current->endereco_lexico.nivel, current->tipo);
 
-        current = current->next;
+        current = current->proximo;
     }
 }
 
@@ -67,7 +69,7 @@ void define_tipo(Tabela *t, char *tipo, int num_vars) {
         if (atual != NULL) {
             atual->tipo = malloc(sizeof(tipo));
             strcpy(atual->tipo, tipo);
-            atual = atual->next;
+            atual = atual->proximo;
         } else {
             break;
         }

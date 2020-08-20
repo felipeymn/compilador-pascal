@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------
- *            Arquivo: compilaodr.h
+ *            Arquivo: compilador.h
  * -------------------------------------------------------------------
  *              Autor: Bruno Muller Junior
  *               Data: 08/2007
@@ -11,6 +11,7 @@
  *
  * ------------------------------------------------------------------- */
 #include "utils/tabela_simbolos/tabela_simbolos.h"
+#include "utils/pilha_variaveis/pilha_variaveis.h"
 
 typedef enum simbolos {
     simb_program,
