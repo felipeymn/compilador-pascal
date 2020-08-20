@@ -12,7 +12,7 @@ typedef struct Simbolo {
     char id[TAM_TOKEN];
     char *tipo;
     EnderecoLexico endereco_lexico;
-    struct Simbolo *next;
+    struct Simbolo *proximo;
 } Simbolo;
 
 typedef struct Tabela {

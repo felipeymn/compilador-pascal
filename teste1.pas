@@ -5,5 +5,6 @@ var
   tamandua, mamute, cegonha, jacare: boolean;
 
 begin
+  pera := caqui + cenoura;
 end.
 
