@@ -15,12 +15,18 @@
 int num_vars;
 int num_vars_tipo;
 Tabela *tab_simb;
+PilhaVariaveis *pilha_var;
+PilhaVariaveis *primeiro_fator;
+PilhaVariaveis *segundo_fator;
+char tipo_operacao; // Pode ser aritmetica ou booleana [A ou B]
 EnderecoLexico end_lex;
+char instrucao_operador_alta[5];
+char instrucao_operador_baixa[5];
 char token_atual[TAM_TOKEN];
-char instrucao_operador_a[5];
-char instrucao_operador_b[5];
 
-Simbolo *variavel;
+
+Simbolo *variavel_atual;
+Simbolo *variavel_atribuicao;
 
 int yylex();
 void yyerror(const char *s);
@@ -35,7 +41,7 @@ void yyerror(const char *s);
 %token IF ELSE WHILE DO OR DIV NOT NUMERO
 %token ADICAO SUBTRACAO MULTIPLICACAO DIVISAO
 %token IGUAL DESIGUAL MENOR MENOR_IGUAL MAIOR MAIOR_IGUAL ABRE_COLCHETES FECHA_COLCHETES
-%token CONJUNCAO
+%token AND
 %%
 
 programa: { 
@@ -98,18 +104,34 @@ lista_idents: lista_idents VIRGULA IDENT
 comando_composto: T_BEGIN comandos T_END 
 ;
 
-comandos: atribuicao 
+comandos: comandos atribuicao 
         |
 ;
 
-atribuicao: variavel ATRIBUICAO expressao PONTO_E_VIRGULA
+atribuicao: variavel {
+      empilha_variavel(pilha_var, variavel_atual->tipo);
+      variavel_atribuicao = variavel_atual;
+   } 
+   ATRIBUICAO expressao {
+      primeiro_fator = desempilha_variavel(pilha_var);
+      segundo_fator = desempilha_variavel(pilha_var);
+      if (strcmp(primeiro_fator->tipo, segundo_fator->tipo) == 0) {
+         int tamanho = strlen("ARMZ") + contaDigitos(variavel_atribuicao->endereco_lexico.nivel) + contaDigitos(variavel_atribuicao->endereco_lexico.deslocamento) + 3;
+         char* instrucao_composta = malloc(tamanho);
+         snprintf(instrucao_composta, tamanho, "%s %d,%d", "ARMZ", variavel_atribuicao->endereco_lexico.nivel,variavel_atribuicao->endereco_lexico.deslocamento);
+         geraCodigo (NULL, instrucao_composta);
+      } else { 
+         imprimeErro("Operacao entre variaveis de tipos diferentes");
+      }
+
+   } PONTO_E_VIRGULA
 ;
 
 variavel: IDENT {      
       /* Verifica se a variavel foi instanciada anteriormente */
-      variavel = busca(tab_simb, token);
-      if (variavel == NULL) {
-         char err_atrib[100] = "atribuicao invalida: variavel '";
+      variavel_atual = busca(tab_simb, token);
+      if (variavel_atual == NULL) {
+         char err_atrib[100] = "Atribuicao invalida: variavel '";
          strcat(err_atrib, token);
          strcat(err_atrib, "' nao existe");
          imprimeErro(err_atrib);
@@ -125,12 +147,10 @@ lista_expressoes: lista_expressoes VIRGULA expressao
                 | expressao
 ;
 
-
-
-
 expressao: sinal_expressao expressao_simples parte_expressao
 ;
 
+// TODO: Arrumar funcionamento do sinal
 sinal_expressao: ADICAO | SUBTRACAO |
 ;
 
@@ -139,49 +159,106 @@ parte_expressao: relacao expressao_simples
 ;
 
 expressao_simples: expressao_simples operador_baixa_precedencia termo {
-      geraCodigo(NULL, instrucao_operador_b);
+      primeiro_fator = desempilha_variavel(pilha_var);
+      segundo_fator = desempilha_variavel(pilha_var);
+
+      char *tipo;
+      switch (tipo_operacao) {
+         case 'A':
+            tipo = "integer";
+            break;
+         case 'B':
+            tipo = "boolean";
+            break;
+      }
+
+      if ((strcmp(primeiro_fator->tipo, tipo) == 0) && (strcmp(primeiro_fator->tipo, segundo_fator->tipo) == 0)) {
+         geraCodigo(NULL, instrucao_operador_baixa);
+         empilha_variavel(pilha_var, tipo);
+      } else {
+         imprimeErro("Operacao entre variaveis de tipos diferentes");
+      }
+      free(primeiro_fator);
+      free(segundo_fator);
    }
    | termo    
 
 ;
 
-termo: termo operador_alta_precedencia fator{
+termo: termo operador_alta_precedencia fator {
+      primeiro_fator = desempilha_variavel(pilha_var);
+      segundo_fator = desempilha_variavel(pilha_var);
 
-      geraCodigo(NULL, instrucao_operador_a);
+      char *tipo;
+      switch (tipo_operacao) {
+         case 'A':
+            tipo = "integer";
+            break;
+         case 'B':
+            tipo = "boolean";
+            break;
+      }
+
+      if ((strcmp(primeiro_fator->tipo, tipo) == 0) && (strcmp(primeiro_fator->tipo, segundo_fator->tipo) == 0)) {
+         geraCodigo(NULL, instrucao_operador_alta);
+         empilha_variavel(pilha_var, tipo);
+      } else {
+         imprimeErro("Operacao entre variaveis de tipos diferentes");
+      }
+      free(primeiro_fator);
+      free(segundo_fator);
 }
 
      | fator
 ;
 
 fator: variavel {
-      EnderecoLexico end_atual = variavel->endereco_lexico;
-      int tamanho = strlen("CRVL") + contaDigitos(end_atual.nivel) + contaDigitos(end_atual.deslocamento) + 5;
+      EnderecoLexico end_atual = variavel_atual->endereco_lexico;
+      int tamanho = strlen("CRVL") + contaDigitos(end_atual.nivel) + contaDigitos(end_atual.deslocamento) + 3;
       char* instrucao_composta = malloc(tamanho);
-      snprintf(instrucao_composta, tamanho, "%s %d, %d", "CRVL", end_atual.nivel, end_atual.deslocamento);
+      snprintf(instrucao_composta, tamanho, "%s %d,%d", "CRVL", end_atual.nivel, end_atual.deslocamento);
       geraCodigo (NULL, instrucao_composta);
+      empilha_variavel(pilha_var, variavel_atual->tipo);
+      free(instrucao_composta);
    } 
    | NUMERO {
       geraCodigo (NULL, formataInstrucaoComposta("CRCT", atoi(token)));
+      empilha_variavel(pilha_var, "integer");
    }
+   | ABRE_PARENTESES expressao FECHA_PARENTESES
+   | NOT fator
+   // TODO: IMPLEMENTAR CHAMADA DE FUNCAO
 ;
 
 relacao: IGUAL | DESIGUAL | MENOR | MENOR_IGUAL | MAIOR | MAIOR_IGUAL
 ;
 
 operador_baixa_precedencia: ADICAO {
-      strcpy(instrucao_operador_b, "SOMA");
+      strcpy(instrucao_operador_baixa, "SOMA");
+      tipo_operacao = 'A';
    }| SUBTRACAO {
-      strcpy(instrucao_operador_b, "SUBT");
-   }| OR
+      strcpy(instrucao_operador_baixa, "SUBT");
+      tipo_operacao = 'A';
+   }| OR {
+      strcpy(instrucao_operador_alta, "DISJ");
+      tipo_operacao = 'B';
+   }
 ;
 
 operador_alta_precedencia: MULTIPLICACAO {
-      strcpy(instrucao_operador_a, "MULT");
+      strcpy(instrucao_operador_alta, "MULT");
+      tipo_operacao = 'A';
+
    }
    | DIV | DIVISAO {
-      strcpy(instrucao_operador_a, "DIVI");
+      strcpy(instrucao_operador_alta, "DIVI");
+      tipo_operacao = 'A';
 
-   }| CONJUNCAO
+
+   }| AND {
+      strcpy(instrucao_operador_alta, "CONJ");
+      tipo_operacao = 'B';
+   }
 ;
 
 %%
@@ -205,6 +282,7 @@ int main (int argc, char** argv) {
  *  Inicia a Tabela de S�mbolos
  * ------------------------------------------------------------------- */
    tab_simb = cria_tabela();
+   pilha_var = cria_pilha_variaveis();
    num_vars = 0;
    num_vars_tipo = 0;
    end_lex.nivel = 0;

@@ -53,7 +53,7 @@ typedef enum simbolos {
     simb_maior_igual,
     simb_abre_colchetes,
     simb_fecha_colchetes,
-    simb_conjuncao
+    simb_and
 } simbolos;
 
 /* -------------------------------------------------------------------

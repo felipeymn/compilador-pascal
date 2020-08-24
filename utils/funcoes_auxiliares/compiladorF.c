@@ -46,10 +46,10 @@ int imprimeErro(char* erro) {
 
 int contaDigitos(int valor) {
     int i = 0;
-    while (valor != 0) {
+    do {
         valor /= 10;
         ++i;
-    }
+    } while (valor != 0);
     return i;
 }
 

@@ -119,7 +119,7 @@ do { simbolo = simb_do;
           return DO;
 }
 
-or { simbolo = simb_or;
+OR { simbolo = simb_or;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME("or ");
           return OR;
@@ -131,7 +131,7 @@ div { simbolo = simb_div;
           return DIV;
 }
 
-not { simbolo = simb_not;
+NOT { simbolo = simb_not;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME("not ");
           return NOT;
@@ -264,10 +264,10 @@ not { simbolo = simb_not;
           return ABRE_COLCHETES;
 }
 
-conjuncao { simbolo = simb_conjuncao;  
+AND { simbolo = simb_and;  
           strncpy (token, yytext, TAM_TOKEN);
-          IMPRIME(" CONJUNCAO ");
-          return CONJUNCAO;
+          IMPRIME(" AND ");
+          return AND;
 }
 
 \] { simbolo = simb_fecha_colchetes;  

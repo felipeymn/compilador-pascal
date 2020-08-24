@@ -8,8 +8,8 @@ typedef struct PilhaVariaveis {
 } PilhaVariaveis;
 
 PilhaVariaveis *cria_pilha_variaveis();
-void empilha_variavel(PilhaVariaveis *p, PilhaVariaveis *v);
-void desempilha_variavel(PilhaVariaveis *p);
+void empilha_variavel(PilhaVariaveis *p, char *tipo);
+PilhaVariaveis *desempilha_variavel(PilhaVariaveis *p);
 
 
 #endif
