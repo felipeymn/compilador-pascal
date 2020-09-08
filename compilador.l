@@ -23,6 +23,8 @@ numero [0-9]+
 
 comentario "(*".*"*)"
 
+string '[ -&(-~]*'
+
 %%
 
 {pulo_linha} {nl++;} 
@@ -107,6 +109,12 @@ else { simbolo = simb_else;
           return ELSE;
 }
 
+then { simbolo = simb_then;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME("then ");
+          return THEN;
+}
+
 while { simbolo = simb_while;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME("while ");
@@ -186,6 +194,12 @@ NOT { simbolo = simb_not;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" ident  ");
           return IDENT;
+        }
+
+{string} { simbolo = simb_string; 
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" string  ");
+          return STRING;
         }
 
    /*******************************************/
@@ -276,7 +290,17 @@ AND { simbolo = simb_and;
           return FECHA_COLCHETES;
 }
 
+READ { simbolo = simb_read;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" READ ");
+          return READ;
+}
 
+WRITE { simbolo = simb_write;  
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" WRITE ");
+          return WRITE;
+}
 
 %%
 

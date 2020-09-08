@@ -15,6 +15,7 @@
 int num_vars;
 int num_vars_tipo;
 Tabela *tab_simb;
+PilhaRotulos *pilha_rot;
 PilhaVariaveis *pilha_var;
 PilhaVariaveis *primeiro_fator;
 PilhaVariaveis *segundo_fator;
@@ -22,7 +23,10 @@ char tipo_operacao; // Pode ser aritmetica ou booleana [A ou B]
 EnderecoLexico end_lex;
 char instrucao_operador_alta[5];
 char instrucao_operador_baixa[5];
+char instrucao_relacao[5];
 char token_atual[TAM_TOKEN];
+char rot_continua[4];
+char rot_desvia[4];
 
 
 Simbolo *variavel_atual;
@@ -38,10 +42,13 @@ void yyerror(const char *s);
 %token T_BEGIN T_END VAR IDENT ATRIBUICAO
 /*** Aula 2  ***/
 %token LABEL TYPE ARRAY OF PROCEDURE FUNCTION
-%token IF ELSE WHILE DO OR DIV NOT NUMERO
+%token IF THEN ELSE WHILE DO OR DIV NOT NUMERO
 %token ADICAO SUBTRACAO MULTIPLICACAO DIVISAO
 %token IGUAL DESIGUAL MENOR MENOR_IGUAL MAIOR MAIOR_IGUAL ABRE_COLCHETES FECHA_COLCHETES
-%token AND
+%token AND READ WRITE STRING
+
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 %%
 
 programa: { 
@@ -101,11 +108,26 @@ lista_idents: lista_idents VIRGULA IDENT
             | IDENT 
 ;
 
-comando_composto: T_BEGIN comandos T_END 
+comando_composto: T_BEGIN parte_comando_composto T_END
 ;
 
-comandos: comandos atribuicao 
-        |
+parte_comando_composto: parte_comando_composto PONTO_E_VIRGULA comando 
+                      | comando
+;
+comando: parte_comando comando_sem_rotulo
+;
+
+parte_comando: NUMERO DOIS_PONTOS 
+             |
+;
+
+comando_sem_rotulo: read
+                  | write
+                  | atribuicao
+                  | comando_repetitivo
+                  | comando_condicional
+                  | comando_composto
+                  |
 ;
 
 atribuicao: variavel {
@@ -121,10 +143,10 @@ atribuicao: variavel {
          snprintf(instrucao_composta, tamanho, "%s %d,%d", "ARMZ", variavel_atribuicao->endereco_lexico.nivel,variavel_atribuicao->endereco_lexico.deslocamento);
          geraCodigo (NULL, instrucao_composta);
       } else { 
-         imprimeErro("Operacao entre variaveis de tipos diferentes");
+         imprimeErro("3 -Operacao entre variaveis de tipos diferentes");
       }
 
-   } PONTO_E_VIRGULA
+   }
 ;
 
 variavel: IDENT {      
@@ -154,7 +176,12 @@ expressao: sinal_expressao expressao_simples parte_expressao
 sinal_expressao: ADICAO | SUBTRACAO |
 ;
 
-parte_expressao: relacao expressao_simples 
+parte_expressao: relacao expressao_simples {
+      desempilha_variavel(pilha_var);
+      desempilha_variavel(pilha_var);
+      geraCodigo(NULL, instrucao_relacao);
+      empilha_variavel(pilha_var, "boolean");
+   }
                |
 ;
 
@@ -176,13 +203,13 @@ expressao_simples: expressao_simples operador_baixa_precedencia termo {
          geraCodigo(NULL, instrucao_operador_baixa);
          empilha_variavel(pilha_var, tipo);
       } else {
-         imprimeErro("Operacao entre variaveis de tipos diferentes");
+         imprimeErro("1 -Operacao entre variaveis de tipos diferentes");
       }
       free(primeiro_fator);
       free(segundo_fator);
+
    }
    | termo    
-
 ;
 
 termo: termo operador_alta_precedencia fator {
@@ -198,17 +225,15 @@ termo: termo operador_alta_precedencia fator {
             tipo = "boolean";
             break;
       }
-
       if ((strcmp(primeiro_fator->tipo, tipo) == 0) && (strcmp(primeiro_fator->tipo, segundo_fator->tipo) == 0)) {
          geraCodigo(NULL, instrucao_operador_alta);
          empilha_variavel(pilha_var, tipo);
       } else {
-         imprimeErro("Operacao entre variaveis de tipos diferentes");
+         imprimeErro("2 -Operacao entre variaveis de tipos diferentes");
       }
       free(primeiro_fator);
       free(segundo_fator);
 }
-
      | fator
 ;
 
@@ -230,16 +255,34 @@ fator: variavel {
    // TODO: IMPLEMENTAR CHAMADA DE FUNCAO
 ;
 
-relacao: IGUAL | DESIGUAL | MENOR | MENOR_IGUAL | MAIOR | MAIOR_IGUAL
+relacao: IGUAL {
+      strcpy(instrucao_relacao, "CMIG");
+      tipo_operacao = 'B';
+   } | DESIGUAL {
+      strcpy(instrucao_relacao, "CMDG");
+      tipo_operacao = 'B';
+   } | MENOR {
+      strcpy(instrucao_relacao, "CMME");
+      tipo_operacao = 'B';
+   } | MENOR_IGUAL {
+      strcpy(instrucao_relacao, "CMEG");
+      tipo_operacao = 'B';
+   } | MAIOR {
+      strcpy(instrucao_relacao, "CMMA");
+      tipo_operacao = 'B';
+   } | MAIOR_IGUAL {
+      strcpy(instrucao_relacao, "CMAG");
+      tipo_operacao = 'B';
+   }
 ;
 
 operador_baixa_precedencia: ADICAO {
       strcpy(instrucao_operador_baixa, "SOMA");
       tipo_operacao = 'A';
-   }| SUBTRACAO {
+   } | SUBTRACAO {
       strcpy(instrucao_operador_baixa, "SUBT");
       tipo_operacao = 'A';
-   }| OR {
+   } | OR {
       strcpy(instrucao_operador_alta, "DISJ");
       tipo_operacao = 'B';
    }
@@ -248,16 +291,114 @@ operador_baixa_precedencia: ADICAO {
 operador_alta_precedencia: MULTIPLICACAO {
       strcpy(instrucao_operador_alta, "MULT");
       tipo_operacao = 'A';
-
-   }
-   | DIV | DIVISAO {
+   } | DIV {
       strcpy(instrucao_operador_alta, "DIVI");
       tipo_operacao = 'A';
-
-
-   }| AND {
+   } | DIVISAO {
+      strcpy(instrucao_operador_alta, "DIVI");
+      tipo_operacao = 'A';
+   } | AND {
       strcpy(instrucao_operador_alta, "CONJ");
       tipo_operacao = 'B';
+   }
+;
+
+comando_repetitivo: WHILE {
+      gera_rotulo(pilha_rot, rot_continua);
+      empilha_rotulo(pilha_rot, rot_continua);
+      gera_rotulo(pilha_rot, rot_desvia);
+      empilha_rotulo(pilha_rot, rot_desvia);
+      geraCodigo(rotulo_continua(pilha_rot), "NADA");
+      imprime_pilha_rotulos(pilha_rot);
+   }
+   expressao {
+      int tamanho = strlen("DSVF") + strlen(rotulo_desvia(pilha_rot)) + 5;
+      char* instrucao_composta = malloc(tamanho);
+      snprintf(instrucao_composta, tamanho, "DSVF %s", rotulo_desvia(pilha_rot));
+      geraCodigo(NULL, instrucao_composta);
+   } DO comando_sem_rotulo {
+      int tamanho = strlen("DSVF") + strlen(rotulo_desvia(pilha_rot)) + 5;
+      char* instrucao_composta = malloc(tamanho);
+      snprintf(instrucao_composta, tamanho, "DSVS %s", rotulo_continua(pilha_rot));
+      geraCodigo(NULL, instrucao_composta);
+      geraCodigo(rotulo_desvia(pilha_rot), "NADA");
+      desempilha_rotulo(pilha_rot);
+      desempilha_rotulo(pilha_rot);
+   }
+;
+
+comando_condicional: IF {
+      gera_rotulo(pilha_rot, rot_continua);
+      empilha_rotulo(pilha_rot, rot_continua);
+      gera_rotulo(pilha_rot, rot_desvia);
+      empilha_rotulo(pilha_rot, rot_desvia);
+      imprime_pilha_rotulos(pilha_rot);
+   }
+   expressao {
+      int tamanho = strlen("DSVF") + strlen(rotulo_desvia(pilha_rot)) + 5;
+      char* instrucao_composta = malloc(tamanho);
+      snprintf(instrucao_composta, tamanho, "DSVF %s", rotulo_continua(pilha_rot));
+      geraCodigo(NULL, instrucao_composta);
+   }  THEN comando_sem_rotulo {
+      int tamanho = strlen("DSVF") + strlen(rotulo_desvia(pilha_rot)) + 5;
+      char* instrucao_composta = malloc(tamanho);
+      snprintf(instrucao_composta, tamanho, "DSVF %s", rotulo_desvia(pilha_rot));
+      geraCodigo(NULL, instrucao_composta);
+      geraCodigo(rotulo_continua(pilha_rot), "NADA");
+   } parte_comando_condicional {
+      geraCodigo(rotulo_desvia(pilha_rot), "NADA");
+      desempilha_rotulo(pilha_rot);
+      desempilha_rotulo(pilha_rot);
+   }
+;
+
+parte_comando_condicional: ELSE comando_sem_rotulo 
+                         | %prec LOWER_THAN_ELSE
+;
+
+read: READ ABRE_PARENTESES IDENT {
+      Simbolo *variavel_read = busca(tab_simb, token);
+      if (variavel_read == NULL) {
+         char err_atrib[100] = "Leitura invalida: variavel '";
+         strcat(err_atrib, token);
+         strcat(err_atrib, "' nao existe");
+         imprimeErro(err_atrib);
+      } else {
+         geraCodigo(NULL, "LEIT");
+         int tamanho = strlen("ARMZ") + contaDigitos(variavel_read->endereco_lexico.nivel) + contaDigitos(variavel_read->endereco_lexico.deslocamento) + 3;
+         char* instrucao_composta = malloc(tamanho);
+         snprintf(instrucao_composta, tamanho, "%s %d,%d", "ARMZ", variavel_read->endereco_lexico.nivel,variavel_read->endereco_lexico.deslocamento);
+         geraCodigo (NULL, instrucao_composta);
+      }
+   } FECHA_PARENTESES 
+;
+write: WRITE ABRE_PARENTESES conteudo {
+
+   } FECHA_PARENTESES 
+;
+
+conteudo: IDENT {
+         Simbolo *variavel_write = busca(tab_simb, token);
+      if (variavel_write == NULL) {
+         char err_atrib[100] = "Impressao invalida: variavel '";
+         strcat(err_atrib, token);
+         strcat(err_atrib, "' nao existe");
+         imprimeErro(err_atrib);
+      } else {
+         int tamanho = strlen("CRVL") + contaDigitos(variavel_write->endereco_lexico.nivel) + contaDigitos(variavel_write->endereco_lexico.deslocamento) + 3;
+         char* instrucao_composta = malloc(tamanho);
+         snprintf(instrucao_composta, tamanho, "%s %d,%d", "CRVL", variavel_write->endereco_lexico.nivel,variavel_write->endereco_lexico.deslocamento);
+         geraCodigo (NULL, instrucao_composta);
+         geraCodigo(NULL, "IMPR");
+      }
+   }
+   | STRING {
+      char* string = removeAspas(token);
+      int tamanho = strlen("CRCT") + strlen(string) + 2;
+      char* instrucao_composta = malloc(tamanho);
+      snprintf(instrucao_composta, tamanho, "%s %s", "CRCT", string);
+      geraCodigo (NULL, instrucao_composta);
+      geraCodigo(NULL, "IMPR");
    }
 ;
 
@@ -282,6 +423,7 @@ int main (int argc, char** argv) {
  *  Inicia a Tabela de S�mbolos
  * ------------------------------------------------------------------- */
    tab_simb = cria_tabela();
+   pilha_rot = cria_pilha_rotulos();
    pilha_var = cria_pilha_variaveis();
    num_vars = 0;
    num_vars_tipo = 0;

@@ -5,7 +5,7 @@
 
    pilha_variaveis.c:
     Arquivo com a implementação da API da pilha de variáveis
-    Utilizada pelo compilador para verificar o tipo (integer, boolean, etc) 
+    Utilizada pelo compilador para verificar o tipo (integer, boolean, etc)
     dos fatores em uma expressao
 */
 
@@ -24,7 +24,6 @@ PilhaVariaveis *cria_pilha_variaveis() {
     return p;
 }
 
-
 void empilha_variavel(PilhaVariaveis *p, char *tipo) {
     PilhaVariaveis *v = malloc(sizeof(PilhaVariaveis));
     v->tipo = tipo;
@@ -39,4 +38,13 @@ PilhaVariaveis *desempilha_variavel(PilhaVariaveis *p) {
         return desempilhado;
     }
     return NULL;
+}
+
+void imprime_pilha(PilhaVariaveis *p) {
+    printf("\nPilha:\n\n");
+    PilhaVariaveis *desempilhado = p->cabeca;
+    while (desempilhado != NULL) {
+        printf("Tipo: %s\n", desempilhado->tipo);
+        desempilhado = desempilhado->proximo;
+    }
 }

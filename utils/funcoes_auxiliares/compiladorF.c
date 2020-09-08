@@ -23,9 +23,9 @@
  *  vari�veis globais
  * ------------------------------------------------------------------- */
 
-FILE* fp = NULL;
+FILE *fp = NULL;
 
-void geraCodigo(char* rot, char* comando) {
+void geraCodigo(char *rot, char *comando) {
     if (fp == NULL) {
         fp = fopen("MEPA", "w");
     }
@@ -39,7 +39,7 @@ void geraCodigo(char* rot, char* comando) {
     }
 }
 
-int imprimeErro(char* erro) {
+int imprimeErro(char *erro) {
     fprintf(stderr, "Erro na linha %d - %s\n", nl, erro);
     exit(-1);
 }
@@ -53,10 +53,23 @@ int contaDigitos(int valor) {
     return i;
 }
 
-char* formataInstrucaoComposta(char* instrucao, int complemento) {
+char *formataInstrucaoComposta(char *instrucao, int complemento) {
     int tamanho = strlen(instrucao) + contaDigitos(complemento) + 2;
-    char* instrucao_composta = malloc(tamanho);
+    char *instrucao_composta = malloc(tamanho);
     snprintf(instrucao_composta, tamanho, "%s %d", instrucao, complemento);
 
     return instrucao_composta;
+}
+
+char *removeAspas(char *entrada) {
+    int i;
+    char *saida;
+    printf("%s\n", entrada);
+    saida = malloc(strlen(entrada) - 1);
+    for (i = 1; i < strlen(entrada) - 1; i++) {
+        saida[i - 1] = entrada[i];
+    }
+    saida[i] = 0;
+    printf("%s\n", saida);
+    return saida;
 }

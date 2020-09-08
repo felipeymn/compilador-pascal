@@ -5,7 +5,20 @@ var
   tamandua, mamute, cegonha, jacare: boolean;
 
 begin
-  caqui := pera + 10 - manga;
+  while pera <> 11 do
+  begin
+    while pera > 5 do
+    begin
+        while pera > 5 do
+        begin
+          if caqui > 21 then
+          begin
+            pera := pera + 1;
+          end;
+        end;
+      pera := pera + 1;
+    end;
+  end;
 end.
 
 
