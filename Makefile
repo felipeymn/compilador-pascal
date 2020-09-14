@@ -26,6 +26,7 @@ pilha_variaveis.o : $(PATHPILHAVARIAVEL)pilha_variaveis.c $(PATHPILHAVARIAVEL)pi
 pilha_rotulos.o : $(PATHPILHAROTULO)pilha_rotulos.c $(PATHPILHAROTULO)pilha_rotulos.h
 	gcc -c utils/pilha_rotulos/pilha_rotulos.c -o pilha_rotulos.o
 
+
 clean : 
 	rm -f compilador.tab.* lex.yy.c
 

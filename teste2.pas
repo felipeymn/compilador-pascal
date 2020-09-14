@@ -1,14 +1,17 @@
-program cmdaf (input, output);
-var i, j: integer;
-begin
-  READ(j);
-  i:=0;
-  while (i < j) do
+program proc2 (input, output);
+var x, y: integer;
+  procedure p(t:integer);
+  var z:integer;
   begin
-    if (i div 2 * 2 = i) then 
-      WRITE(i)
+    if (t>1) then 
+     p(t-1)
     else 
-      WRITE(i);
-    i := i + 1;
+      y:=1;
+    z:= y;
+   y:=z*t
   end;
+begin
+  read(x);
+  p(x);
+  write (x,y)
 end.

@@ -46,6 +46,9 @@ int imprimeErro(char *erro) {
 
 int contaDigitos(int valor) {
     int i = 0;
+    if (valor < 0) {
+        i++;
+    }
     do {
         valor /= 10;
         ++i;
@@ -72,4 +75,11 @@ char *removeAspas(char *entrada) {
     saida[i] = 0;
     printf("%s\n", saida);
     return saida;
+}
+
+char *formataInstrucaoCompostaString(char *instrucao, char *complemento) {
+    int tamanho = strlen(instrucao) + strlen(complemento) + 2;
+    char *instrucao_composta = malloc(tamanho);
+    snprintf(instrucao_composta, tamanho, "%s %s", instrucao, complemento);
+    return instrucao_composta;
 }

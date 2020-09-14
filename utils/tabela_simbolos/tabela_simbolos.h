@@ -10,8 +10,10 @@ typedef struct EnderecoLexico {
 
 typedef struct Simbolo {
     char id[TAM_TOKEN];
+    char *categoria;
     char *tipo;
     EnderecoLexico endereco_lexico;
+    void *info_categoria;
     struct Simbolo *proximo;
 } Simbolo;
 
@@ -20,11 +22,29 @@ typedef struct Tabela {
     int tamanho;
 } Tabela;
 
+typedef struct ListaParametros {
+    char *tipo;
+    char *passagem;
+    struct ListaParametros *proximo;
+} ListaParametros;
+
+typedef struct Procedimento {
+    char *rotulo;
+    int num_parametros;
+    ListaParametros lista;
+} Procedimento;
+
 Tabela *cria_tabela();
-Simbolo *cria_simbolo(char *id, char *t, EnderecoLexico e);
+Simbolo *cria_simbolo(char *id, char *t, EnderecoLexico e, char *c);
 void insere(Tabela *t, Simbolo *s);
 void retira(Tabela *t);
 Simbolo *busca(Tabela *t, char *id);
 void imprime_tabela(Tabela *t);
 void define_tipo(Tabela *t, char *tipo, int num_vars);
+void define_deslocamento_params(Tabela *t, int num_vars);
+Procedimento *cria_procedimento(char *r, int np);
+void define_categoria_procedimento(Simbolo *s, char *r, int np);
+Simbolo *busca_categoria(Tabela *t, char *categoria);
+void remove_procedimentos(Tabela *t, int nivel);
+
 #endif

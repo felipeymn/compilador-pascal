@@ -1,24 +1,29 @@
-program exemplo75 (input, output);
-var 
-  pera, caqui, manga :  integer;
-  chuchu, cenoura, rucula: char;
-  tamandua, mamute, cegonha, jacare: boolean;
-
+program proc1 (input, output);
+var x, y: integer;
+   procedure p;
+   var z:integer;
+   begin
+      z:=x;
+      x:=x-1;
+      if (z>1) then 
+         p
+      else
+       y:=1;
+      y:=y*z
+   end;
+   procedure aa;
+   var z:integer;
+   begin
+      z:=x;
+      x:=x-1;
+      if (z>1) then 
+         p
+      else
+       y:=1;
+      y:=y*z
+   end;
 begin
-  while pera <> 11 do
-  begin
-    while pera > 5 do
-    begin
-        while pera > 5 do
-        begin
-          if caqui > 21 then
-          begin
-            pera := pera + 1;
-          end;
-        end;
-      pera := pera + 1;
-    end;
-  end;
+   read(x);
+   p;
+   write (x,y)
 end.
-
-

@@ -17,7 +17,7 @@ pulo_linha [\n]
 
 descarte [\t ]+
 
-ident [a-zAZ][a-zAZ1-9]*
+ident [a-zA-Z][a-zA-Z0-9]*
 
 numero [0-9]+
 
@@ -127,7 +127,7 @@ do { simbolo = simb_do;
           return DO;
 }
 
-OR { simbolo = simb_or;
+or { simbolo = simb_or;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME("or ");
           return OR;
@@ -139,7 +139,7 @@ div { simbolo = simb_div;
           return DIV;
 }
 
-NOT { simbolo = simb_not;
+not { simbolo = simb_not;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME("not ");
           return NOT;
@@ -189,12 +189,6 @@ NOT { simbolo = simb_not;
           IMPRIME(" fecha_parenteses ");
           return FECHA_PARENTESES;
  }
-
-{ident} { simbolo = simb_identificador; 
-          strncpy (token, yytext, TAM_TOKEN);
-          IMPRIME(" ident  ");
-          return IDENT;
-        }
 
 {string} { simbolo = simb_string; 
           strncpy (token, yytext, TAM_TOKEN);
@@ -278,7 +272,7 @@ NOT { simbolo = simb_not;
           return ABRE_COLCHETES;
 }
 
-AND { simbolo = simb_and;  
+and { simbolo = simb_and;  
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" AND ");
           return AND;
@@ -290,17 +284,23 @@ AND { simbolo = simb_and;
           return FECHA_COLCHETES;
 }
 
-READ { simbolo = simb_read;  
+read { simbolo = simb_read;  
           strncpy (token, yytext, TAM_TOKEN);
-          IMPRIME(" READ ");
+          IMPRIME(" read ");
           return READ;
 }
 
-WRITE { simbolo = simb_write;  
+write { simbolo = simb_write;  
           strncpy (token, yytext, TAM_TOKEN);
-          IMPRIME(" WRITE ");
+          IMPRIME(" write ");
           return WRITE;
 }
+
+{ident} { simbolo = simb_identificador; 
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" ident  ");
+          return IDENT;
+        }
 
 %%
 

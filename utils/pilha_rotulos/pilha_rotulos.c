@@ -18,9 +18,7 @@
 PilhaRotulos *cria_pilha_rotulos() {
     PilhaRotulos *v = malloc(sizeof(PilhaRotulos));
     PilhaRotulos *p = malloc(sizeof(PilhaRotulos));
-    v->proximo = NULL;
-    v->rotulo = "base";
-    p->cabeca = v;
+    p->cabeca = NULL;
     p->tamanho = 0;
     return p;
 }
@@ -33,13 +31,15 @@ void empilha_rotulo(PilhaRotulos *p, char *rotulo) {
     r->proximo = p->cabeca;
     p->cabeca = r;
     p->tamanho++;
+    printf("========================\n");
+    printf("Rotulo %s empilhado!\n", rotulo);
+    printf("========================\n");
 }
 
 PilhaRotulos *desempilha_rotulo(PilhaRotulos *p) {
     PilhaRotulos *desempilhado = p->cabeca;
     if (desempilhado != NULL) {
         p->cabeca = p->cabeca->proximo;
-        p->tamanho--;
         return desempilhado;
     }
     return NULL;
@@ -49,9 +49,19 @@ void gera_rotulo(PilhaRotulos *p, char *rotulo) {
     snprintf(rotulo, 4, "R%02d", p->tamanho);
 }
 
-char *rotulo_continua(PilhaRotulos *p) { return p->cabeca->proximo->rotulo; }
+char *rotulo_continua(PilhaRotulos *p) {
+    if (p->cabeca->proximo != NULL) {
+        return p->cabeca->proximo->rotulo;
+    }
+    return NULL;
+}
 
-char *rotulo_desvia(PilhaRotulos *p) { return p->cabeca->rotulo; }
+char *rotulo_desvia(PilhaRotulos *p) {
+    if (p->cabeca != NULL) {
+        return p->cabeca->rotulo;
+    }
+    return NULL;
+}
 
 void imprime_pilha_rotulos(PilhaRotulos *p) {
     printf("\nPilha:\n\n");
