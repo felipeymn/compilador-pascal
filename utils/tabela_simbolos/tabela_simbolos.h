@@ -53,7 +53,6 @@ void remove_procedimentos(Tabela *t, int nivel);
 Parametro *cria_parametro(char *passagem);
 void define_categoria_parametro(Simbolo *s, char *passagem);
 void adiciona_parametro_lista(Procedimento *p, char *tipo, char *passagem);
-void imprimeLista(Procedimento *p);
 ListaParametros *busca_parametro_lista(Procedimento *p, int indice);
 
 #endif

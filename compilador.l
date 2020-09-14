@@ -266,22 +266,10 @@ not { simbolo = simb_not;
           return MAIOR_IGUAL; 
 }
 
-\[ { simbolo = simb_abre_colchetes;  
-          strncpy (token, yytext, TAM_TOKEN);
-          IMPRIME(" ABRE_COLCHETES ");
-          return ABRE_COLCHETES;
-}
-
 and { simbolo = simb_and;  
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME(" AND ");
           return AND;
-}
-
-\] { simbolo = simb_fecha_colchetes;  
-          strncpy (token, yytext, TAM_TOKEN);
-          IMPRIME(" FECHA COLCHETES ");
-          return FECHA_COLCHETES;
 }
 
 read { simbolo = simb_read;  

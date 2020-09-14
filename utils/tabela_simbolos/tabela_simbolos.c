@@ -134,18 +134,6 @@ ListaParametros *busca_parametro_lista(Procedimento *p, int indice) {
     return atual;
 }
 
-void imprimeLista(Procedimento *p) {
-    ListaParametros *atual = p->lista;
-    printf("==============\n");
-    printf("LISTA PARAMS\n");
-    printf("==============\n");
-
-    while (atual != NULL) {
-        printf("%s %s\n", atual->passagem, atual->tipo);
-        atual = atual->proximo;
-    }
-}
-
 void define_categoria_procedimento(Simbolo *s, char *r, int np) {
     Procedimento *p = cria_procedimento(r, np);
     s->info_categoria = (Procedimento *)p;

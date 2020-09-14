@@ -56,7 +56,7 @@ int contaDigitos(int valor) {
     return i;
 }
 
-char *formataInstrucaoComposta(char *instrucao, int complemento) {
+char *formataInstrucaoCompostaInt(char *instrucao, int complemento) {
     int tamanho = strlen(instrucao) + contaDigitos(complemento) + 2;
     char *instrucao_composta = malloc(tamanho);
     snprintf(instrucao_composta, tamanho, "%s %d", instrucao, complemento);
@@ -82,4 +82,33 @@ char *formataInstrucaoCompostaString(char *instrucao, char *complemento) {
     char *instrucao_composta = malloc(tamanho);
     snprintf(instrucao_composta, tamanho, "%s %s", instrucao, complemento);
     return instrucao_composta;
+}
+
+char *formataInstrucaoCompostaStringInt(char *instrucao, char *complemento,
+                                        int complementoInt) {
+    int tamanho = strlen(instrucao) + strlen(complemento) +
+                  contaDigitos(complementoInt) + 6;
+    char *instrucao_composta = malloc(tamanho);
+    snprintf(instrucao_composta, tamanho, "%s %s, %d", instrucao, complemento,
+             complementoInt);
+    return instrucao_composta;
+}
+
+char *formataInstrucaoCompostaIntInt(char *instrucao, int complementoUm,
+                                     int complementoDois) {
+    int tamanho = strlen(instrucao) + contaDigitos(complementoUm) +
+                  contaDigitos(complementoDois) + 6;
+    char *instrucao_composta = malloc(tamanho);
+    snprintf(instrucao_composta, tamanho, "%s %d, %d", instrucao, complementoUm,
+             complementoDois);
+    return instrucao_composta;
+}
+
+char *imprimeErroVariavel(char *variavel) {
+    char *msg_erro;
+    int tamanho = 43 + strlen(variavel);
+    msg_erro = malloc(tamanho);
+    snprintf(msg_erro, tamanho, "Atribuicao invalida: variavel %s nao existe",
+             variavel);
+    imprimeErro(msg_erro);
 }

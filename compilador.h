@@ -53,8 +53,6 @@ typedef enum simbolos {
     simb_menor_igual,
     simb_maior,
     simb_maior_igual,
-    simb_abre_colchetes,
-    simb_fecha_colchetes,
     simb_and,
     simb_read,
     simb_write,
