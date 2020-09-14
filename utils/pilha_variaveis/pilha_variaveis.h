@@ -2,6 +2,7 @@
 #define PILHA_VARIAVEIS
 
 typedef struct PilhaVariaveis {
+    int tamanho;
     struct PilhaVariaveis *cabeca;
     char *tipo;
     struct PilhaVariaveis *proximo;

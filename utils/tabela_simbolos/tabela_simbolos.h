@@ -31,8 +31,12 @@ typedef struct ListaParametros {
 typedef struct Procedimento {
     char *rotulo;
     int num_parametros;
-    ListaParametros lista;
+    ListaParametros *lista;
 } Procedimento;
+
+typedef struct Parametro {
+    char *passagem;
+} Parametro;
 
 Tabela *cria_tabela();
 Simbolo *cria_simbolo(char *id, char *t, EnderecoLexico e, char *c);
@@ -46,5 +50,10 @@ Procedimento *cria_procedimento(char *r, int np);
 void define_categoria_procedimento(Simbolo *s, char *r, int np);
 Simbolo *busca_categoria(Tabela *t, char *categoria);
 void remove_procedimentos(Tabela *t, int nivel);
+Parametro *cria_parametro(char *passagem);
+void define_categoria_parametro(Simbolo *s, char *passagem);
+void adiciona_parametro_lista(Procedimento *p, char *tipo, char *passagem);
+void imprimeLista(Procedimento *p);
+ListaParametros *busca_parametro_lista(Procedimento *p, int indice);
 
 #endif

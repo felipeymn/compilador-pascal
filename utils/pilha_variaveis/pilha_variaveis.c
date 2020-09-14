@@ -18,9 +18,8 @@
 PilhaVariaveis *cria_pilha_variaveis() {
     PilhaVariaveis *v = malloc(sizeof(PilhaVariaveis));
     PilhaVariaveis *p = malloc(sizeof(PilhaVariaveis));
-    v->proximo = NULL;
-    v->tipo = "undefined";
-    p->cabeca = v;
+    p->cabeca = NULL;
+    p->tamanho = 0;
     return p;
 }
 
@@ -29,22 +28,26 @@ void empilha_variavel(PilhaVariaveis *p, char *tipo) {
     v->tipo = tipo;
     v->proximo = p->cabeca;
     p->cabeca = v;
+    p->tamanho++;
 }
 
 PilhaVariaveis *desempilha_variavel(PilhaVariaveis *p) {
     PilhaVariaveis *desempilhado = p->cabeca;
     if (desempilhado != NULL) {
         p->cabeca = p->cabeca->proximo;
+        p->tamanho--;
         return desempilhado;
     }
     return NULL;
 }
 
 void imprime_pilha(PilhaVariaveis *p) {
+    printf("===============================\n\n");
     printf("\nPilha:\n\n");
     PilhaVariaveis *desempilhado = p->cabeca;
     while (desempilhado != NULL) {
         printf("Tipo: %s\n", desempilhado->tipo);
         desempilhado = desempilhado->proximo;
     }
+    printf("===============================\n\n");
 }

@@ -1,29 +1,5 @@
 program proc1 (input, output);
 var x, y: integer;
-   procedure p;
-   var z:integer;
-   begin
-      z:=x;
-      x:=x-1;
-      if (z>1) then 
-         p
-      else
-       y:=1;
-      y:=y*z
-   end;
-   procedure aa;
-   var z:integer;
-   begin
-      z:=x;
-      x:=x-1;
-      if (z>1) then 
-         p
-      else
-       y:=1;
-      y:=y*z
-   end;
 begin
-   read(x);
-   p;
-   write (x,y)
+   x := x + y
 end.

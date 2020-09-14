@@ -99,16 +99,70 @@ void define_deslocamento_params(Tabela *t, int num_vars) {
 Procedimento *cria_procedimento(char *r, int np) {
     Procedimento *p = malloc(sizeof(Procedimento));
     if (r != NULL) {
-        p->rotulo = malloc(strlen(r));
+        p->rotulo = malloc(strlen(r) + 1);
         strncpy(p->rotulo, r, strlen(r) + 1);
     }
     p->num_parametros = np;
+    p->lista = NULL;
     return p;
+}
+
+void adiciona_parametro_lista(Procedimento *p, char *tipo, char *passagem) {
+    ListaParametros *param = malloc(sizeof(ListaParametros));
+    param->tipo = malloc(strlen(tipo));
+    param->passagem = malloc(strlen(passagem));
+    strcpy(param->tipo, tipo);
+    strcpy(param->passagem, passagem);
+    param->proximo = NULL;
+    ListaParametros *atual = p->lista;
+    if (p->lista == NULL) {
+        p->lista = param;
+    } else {
+        while (atual->proximo != NULL) {
+            atual = atual->proximo;
+        }
+        atual->proximo = param;
+    }
+}
+
+ListaParametros *busca_parametro_lista(Procedimento *p, int indice) {
+    ListaParametros *atual = p->lista;
+
+    for (int i = 1; i < indice; i++) {
+        atual = atual->proximo;
+    }
+    return atual;
+}
+
+void imprimeLista(Procedimento *p) {
+    ListaParametros *atual = p->lista;
+    printf("==============\n");
+    printf("LISTA PARAMS\n");
+    printf("==============\n");
+
+    while (atual != NULL) {
+        printf("%s %s\n", atual->passagem, atual->tipo);
+        atual = atual->proximo;
+    }
 }
 
 void define_categoria_procedimento(Simbolo *s, char *r, int np) {
     Procedimento *p = cria_procedimento(r, np);
     s->info_categoria = (Procedimento *)p;
+}
+
+Parametro *cria_parametro(char *passagem) {
+    Parametro *p = malloc(sizeof(Parametro));
+    if (passagem != NULL) {
+        p->passagem = malloc(strlen(passagem) + 1);
+        strncpy(p->passagem, passagem, strlen(passagem) + 1);
+    }
+    return p;
+}
+
+void define_categoria_parametro(Simbolo *s, char *passagem) {
+    Parametro *p = cria_parametro(passagem);
+    s->info_categoria = (Parametro *)p;
 }
 
 Simbolo *busca_categoria(Tabela *t, char *categoria) {

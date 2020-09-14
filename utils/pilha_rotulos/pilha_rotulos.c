@@ -31,9 +31,6 @@ void empilha_rotulo(PilhaRotulos *p, char *rotulo) {
     r->proximo = p->cabeca;
     p->cabeca = r;
     p->tamanho++;
-    printf("========================\n");
-    printf("Rotulo %s empilhado!\n", rotulo);
-    printf("========================\n");
 }
 
 PilhaRotulos *desempilha_rotulo(PilhaRotulos *p) {

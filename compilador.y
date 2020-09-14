@@ -21,17 +21,20 @@ PilhaVariaveis *pilha_var;
 PilhaVariaveis *pilha_param;
 PilhaVariaveis *primeiro_fator;
 PilhaVariaveis *segundo_fator;
+char* passagem;
 char tipo_operacao; // Pode ser aritmetica ou booleana [A ou B]
 EnderecoLexico end_lex;
 char instrucao_operador_alta[5];
 char instrucao_operador_baixa[5];
-char instrucao_relacao[5];
 char rot_continua[4];
 char rot_desvia[4];
 
 Simbolo *variavel_atual;
 Simbolo *variavel_atribuicao;
 Simbolo *procedimento_atual;
+int chamada_funcao;
+int parametro_real;
+int parametro_real_funcao;
 
 int yylex();
 void yyerror(const char *s);
@@ -66,27 +69,15 @@ programa: {
    }
 ;
 
-bloco: parte_declara_vars parte_declara_subrotina {
-      // TODO: ARRUMAR (PROBLEMAS NOS EXEMPLOS 7.4 E 8.7)
-      if (rotulo_desvia(pilha_rot) == NULL) {
-         empilha_rotulo(pilha_rot, "R00");
-         if (pilha_rot->tamanho == 1) {
-            geraCodigo(NULL, formataInstrucaoCompostaString("BLOCO: DSVS", rotulo_desvia(pilha_rot)));
-         } else {
-            pilha_rot->tamanho--;
-         }
-         geraCodigo(rotulo_desvia(pilha_rot), "NADA");
-         desempilha_rotulo(pilha_rot);
-      } else {
-         gera_rotulo(pilha_rot, rot_desvia);
-         empilha_rotulo(pilha_rot, rot_desvia); 
-         geraCodigo(NULL, formataInstrucaoCompostaString("BLOCO 2: DSVS", rotulo_desvia(pilha_rot)));
-         geraCodigo(rotulo_desvia(pilha_rot), "NADA");
-         desempilha_rotulo(pilha_rot);
-      }
+bloco: parte_declara_vars {
+      gera_rotulo(pilha_rot, rot_desvia);
+      empilha_rotulo(pilha_rot, rot_desvia);
+      geraCodigo(NULL, formataInstrucaoCompostaString("DSVS", rotulo_desvia(pilha_rot)));
+
+   } parte_declara_subrotina {
+      geraCodigo(rotulo_desvia(pilha_rot), "NADA");
    } comando_composto {
       /* Desaloca memoria das variaveis locais */
-      // TODO: EXEMPLO 8.8 DMEM DIFERENTE NO R00 (PROVAVELMENTE RELACIONADO COM TIRAR PROCEDIMENTO DA TS)
       remove_procedimentos(tab_simb, end_lex.nivel);
       Simbolo *dmem = busca_categoria(tab_simb, "var");
       end_lex.deslocamento = dmem->endereco_lexico.deslocamento;
@@ -151,13 +142,10 @@ declara_funcao: FUNCTION IDENT {
       /* Cria e empilha rotulos para controle do procedimento */
       gera_rotulo(pilha_rot, rot_continua);
       empilha_rotulo(pilha_rot, rot_continua);
-      gera_rotulo(pilha_rot, rot_desvia);
-      empilha_rotulo(pilha_rot, rot_desvia);
       /* Adiciona identificador do procedimento na tabela de simbolos */
       insere(tab_simb, cria_simbolo(token, "?", end_lex, "function"));
-      define_categoria_procedimento(tab_simb->cabeca, rot_desvia, 0);
+      define_categoria_procedimento(tab_simb->cabeca, rot_continua, 0);
       /* Gera instrucoes MEPA para inicio do procedimento */
-      geraCodigo(NULL, formataInstrucaoCompostaString("DSVS", rotulo_continua(pilha_rot)));
       geraCodigo(rotulo_desvia(pilha_rot), formataInstrucaoComposta("ENPR", end_lex.nivel));
       procedimento_atual = tab_simb->cabeca;
    } parte_declara_procedimento_ou_funcao DOIS_PONTOS IDENT {
@@ -168,7 +156,6 @@ declara_funcao: FUNCTION IDENT {
       /* Gera instrucoes MEPA para fim do procedimento */
       int tamanho = strlen("RTPR") + contaDigitos(end_lex.nivel) + contaDigitos((*(Procedimento*)procedimento_atual->info_categoria).num_parametros) + 4;
       instrucao_composta = malloc(tamanho);
-      // TODO: ARRUMAR RETORNO DO RTPR
       snprintf(instrucao_composta, tamanho, "RTPR %d, %d", end_lex.nivel, (*(Procedimento*)procedimento_atual->info_categoria).num_parametros);
       for(int i = 0; i < (*(Procedimento*)procedimento_atual->info_categoria).num_parametros; i++) {
          retira(tab_simb);
@@ -186,19 +173,13 @@ declara_procedimento: PROCEDURE IDENT {
       end_lex.nivel++;
       end_lex.deslocamento = -1;
       /* Cria e empilha rotulos para controle do procedimento */
-      printf("========================\n");
-      printf("Entrei na declaracao de procedure!\n");
-      printf("========================\n");
       gera_rotulo(pilha_rot, rot_continua);
       empilha_rotulo(pilha_rot, rot_continua);
-      gera_rotulo(pilha_rot, rot_desvia);
-      empilha_rotulo(pilha_rot, rot_desvia);
+
       /* Adiciona identificador do procedimento na tabela de simbolos */
       insere(tab_simb, cria_simbolo(token, "?", end_lex, "procedure"));
-      define_categoria_procedimento(tab_simb->cabeca, rot_desvia, 0);
+      define_categoria_procedimento(tab_simb->cabeca, rot_continua, 0);
       /* Gera instrucoes MEPA para inicio do procedimento */
-      // TODO: ARRUMAR: ERRO NO EXEMPLO 7.4
-      // geraCodigo(NULL, formataInstrucaoCompostaString("!!!!DSVS", rotulo_continua(pilha_rot)));
       geraCodigo(rotulo_desvia(pilha_rot), formataInstrucaoComposta("ENPR", end_lex.nivel));
       procedimento_atual = tab_simb->cabeca;
    } parte_declara_procedimento_ou_funcao PONTO_E_VIRGULA bloco {
@@ -206,7 +187,6 @@ declara_procedimento: PROCEDURE IDENT {
       /* Gera instrucoes MEPA para fim do procedimento */
       int tamanho = strlen("RTPR") + contaDigitos(end_lex.nivel) + contaDigitos((*(Procedimento*)procedimento_atual->info_categoria).num_parametros) + 4;
       instrucao_composta = malloc(tamanho);
-      // TODO: ARRUMAR RETORNO DO RTPR
       snprintf(instrucao_composta, tamanho, "RTPR %d, %d", end_lex.nivel, (*(Procedimento*)procedimento_atual->info_categoria).num_parametros);
       for(int i = 0; i < (*(Procedimento*)procedimento_atual->info_categoria).num_parametros; i++) {
          retira(tab_simb);
@@ -220,12 +200,14 @@ declara_procedimento: PROCEDURE IDENT {
 ;
 
 parte_declara_procedimento_ou_funcao: parametros_formais
-                          |
+                                    |
 ;
 
 parametros_formais: ABRE_PARENTESES parte_parametros_formais {
       define_deslocamento_params(tab_simb, num_vars);
       (*(Procedimento*)procedimento_atual->info_categoria).num_parametros = num_vars;
+      procedimento_atual->endereco_lexico.deslocamento = - 4 -  num_vars;
+
       num_vars = 0;
       num_vars_tipo = 0;
    } FECHA_PARENTESES
@@ -235,11 +217,24 @@ parte_parametros_formais: parte_parametros_formais PONTO_E_VIRGULA secao_paramet
                         | secao_parametros_formais 
 ;
 
-secao_parametros_formais: parte_secao_parametros_formais lista_idents DOIS_PONTOS tipo
+secao_parametros_formais: parte_secao_parametros_formais lista_idents DOIS_PONTOS tipo_parametros_formais
 ;
 
-parte_secao_parametros_formais: VAR 
-                              |
+tipo_parametros_formais: IDENT {
+      /* Define tipo das variaveis com base no acumulador num_vars_tipo */
+      define_tipo(tab_simb, token, num_vars_tipo);
+      for (int i = 0; i < num_vars_tipo; i++) {
+         adiciona_parametro_lista(((Procedimento*)procedimento_atual->info_categoria), token, passagem);
+      }
+      num_vars_tipo = 0;
+   }
+;
+
+parte_secao_parametros_formais: VAR {
+      passagem = "referencia";
+   } | {
+      passagem = "valor";
+   }
 ;
 
 lista_idents: lista_idents VIRGULA idents_param  
@@ -248,6 +243,10 @@ lista_idents: lista_idents VIRGULA idents_param
 
 idents_param: IDENT {
       insere(tab_simb, cria_simbolo(token, "undefined", end_lex, "param"));
+      if (passagem != NULL) {
+         define_categoria_parametro(tab_simb->cabeca, passagem);
+      }
+
       num_vars++;
       num_vars_tipo++;
    }
@@ -295,29 +294,43 @@ atribuicao_ou_chamada_procedimento_continua: atribuicao
 
 atribuicao: {
       empilha_variavel(pilha_var, variavel_atual->tipo);
-      variavel_atribuicao = variavel_atual; 
+      variavel_atribuicao = variavel_atual;
    }
    ATRIBUICAO expressao {
       primeiro_fator = desempilha_variavel(pilha_var);
       segundo_fator = desempilha_variavel(pilha_var);
       if (strcmp(primeiro_fator->tipo, segundo_fator->tipo) == 0) {
-         int tamanho = strlen("ARMZ") + contaDigitos(variavel_atribuicao->endereco_lexico.nivel) + contaDigitos(variavel_atribuicao->endereco_lexico.deslocamento) + 4;
-         char* instrucao_composta = malloc(tamanho);
-         snprintf(instrucao_composta, tamanho, "%s %d, %d", "ARMZ", variavel_atribuicao->endereco_lexico.nivel,variavel_atribuicao->endereco_lexico.deslocamento);
-         geraCodigo (NULL, instrucao_composta);
-      } else { 
-         imprime_tabela(tab_simb);
-         imprimeErro("3 -Operacao entre variaveis de tipos diferentes");
-      }
+         if ((strcmp(variavel_atribuicao->categoria, "param") == 0) && (strcmp((*(Parametro*)variavel_atribuicao->info_categoria).passagem, "referencia") == 0)) {
 
+            int tamanho = strlen("ARMI") + contaDigitos(variavel_atribuicao->endereco_lexico.nivel) + contaDigitos(variavel_atribuicao->endereco_lexico.deslocamento) + 4;
+            char* instrucao_composta = malloc(tamanho);
+            snprintf(instrucao_composta, tamanho, "%s %d, %d", "ARMI", variavel_atribuicao->endereco_lexico.nivel,variavel_atribuicao->endereco_lexico.deslocamento);
+            geraCodigo (NULL, instrucao_composta);
+         } else {
+            int tamanho = strlen("ARMZ") + contaDigitos(variavel_atribuicao->endereco_lexico.nivel) + contaDigitos(variavel_atribuicao->endereco_lexico.deslocamento) + 4;
+            char* instrucao_composta = malloc(tamanho);
+            snprintf(instrucao_composta, tamanho, "%s %d, %d", "ARMZ", variavel_atribuicao->endereco_lexico.nivel,variavel_atribuicao->endereco_lexico.deslocamento);
+            geraCodigo (NULL, instrucao_composta);
+         }
+      } else { 
+         imprimeErro("Operacao entre variaveis de tipos diferentes");
+      }
+      desempilha_variavel(pilha_var);
    }
 ;
 
-chamada_procedimento: parte_chamada_procedimento {
+chamada_procedimento: {
+      parametro_real = 1;
+   } parte_chamada_procedimento {
       int tamanho = strlen("CHPR") + contaDigitos(end_lex.nivel) + contaDigitos(end_lex.deslocamento) + 6;
       char* instrucao_composta = malloc(tamanho);
       snprintf(instrucao_composta, tamanho, "%s %s, %d", "CHPR", (*(Procedimento*)procedimento_atual->info_categoria).rotulo, end_lex.nivel);
       geraCodigo (NULL, instrucao_composta);
+      printf(">>>>>>>>>>>>>>>>>>>>>>ZERA PARAMETRO REAL: %d\n\n", parametro_real);
+      parametro_real = 0;
+      for (int i = 0; i < (*(Procedimento*)procedimento_atual->info_categoria).num_parametros; i++) {
+         desempilha_variavel(pilha_param);
+      }
    }
 ;
 
@@ -325,22 +338,56 @@ parte_chamada_procedimento: ABRE_PARENTESES lista_expressoes FECHA_PARENTESES
                           |
 ;
 
-chamada_funcao: parte_chamada_funcao 
+chamada_funcao: parte_chamada_funcao{
+
+   }
 ;
 
-parte_chamada_funcao: ABRE_PARENTESES lista_expressoes FECHA_PARENTESES
-                    |
+parte_chamada_funcao: ABRE_PARENTESES lista_expressoes FECHA_PARENTESES {
+      int tamanho;
+      char* instrucao_composta;
+      tamanho = strlen("CHPR") + strlen((*(Procedimento*)procedimento_atual->info_categoria).rotulo) + contaDigitos(end_lex.nivel) + 6;
+      instrucao_composta = malloc(tamanho);
+      snprintf(instrucao_composta, tamanho, "%s %s, %d", "CHPR", (*(Procedimento*)procedimento_atual->info_categoria).rotulo, end_lex.nivel);
+      geraCodigo (NULL, instrucao_composta);
+      for (int i = 0; i < (*(Procedimento*)procedimento_atual->info_categoria).num_parametros; i++) {
+         desempilha_variavel(pilha_param);
+      }
+   } | {
+         int tamanho;
+         char* instrucao_composta;
+         if (chamada_funcao == 1) {
+             tamanho = strlen("CHPR") + strlen((*(Procedimento*)procedimento_atual->info_categoria).rotulo) + contaDigitos(end_lex.nivel) + 6;
+            instrucao_composta = malloc(tamanho);
+            snprintf(instrucao_composta, tamanho, "%s %s, %d", "CHPR", (*(Procedimento*)procedimento_atual->info_categoria).rotulo, end_lex.nivel);
+            geraCodigo (NULL, instrucao_composta);
+            chamada_funcao = 0;
+         }
+    }
+
 ;
 
 /* parte_variavel: ABRE_COLCHETES lista_expressoes FECHA_COLCHETES 
               |
 ; */
 
-lista_expressoes: lista_expressoes VIRGULA expressao 
-                | expressao
+lista_expressoes: lista_expressoes VIRGULA {
+            empilha_variavel(pilha_param, "VAR");
+}expressao {
+      desempilha_variavel(pilha_var);
+      if (parametro_real >= 1) {
+         parametro_real++;
+      }
+   } | {
+      empilha_variavel(pilha_param, "VAR");
+   } expressao {
+      desempilha_variavel(pilha_var);
+   }
 ;
 
-expressao: sinal_expressao expressao_simples parte_expressao
+expressao: sinal_expressao expressao_simples parte_expressao {       
+   // desempilha_variavel(pilha_var);
+}
 ;
 
 // TODO: Arrumar funcionamento do sinal
@@ -351,8 +398,9 @@ sinal_expressao: ADICAO
 
 parte_expressao: relacao expressao_simples {
       desempilha_variavel(pilha_var);
+      PilhaVariaveis *operacao = desempilha_variavel(pilha_var);
       desempilha_variavel(pilha_var);
-      geraCodigo(NULL, instrucao_relacao);
+      geraCodigo(NULL, operacao->tipo);
       empilha_variavel(pilha_var, "boolean");
    }
                |
@@ -360,23 +408,20 @@ parte_expressao: relacao expressao_simples {
 
 expressao_simples: expressao_simples operador_baixa_precedencia termo {
       primeiro_fator = desempilha_variavel(pilha_var);
+      PilhaVariaveis *operacao = desempilha_variavel(pilha_var);
       segundo_fator = desempilha_variavel(pilha_var);
-
-      char *tipo;
-      switch (tipo_operacao) {
-         case 'A':
+      char* tipo;
+      if ((strcmp(operacao->tipo, "SOMA") == 0) || (strcmp(operacao->tipo, "SUBT") == 0)) {
             tipo = "integer";
-            break;
-         case 'B':
+      } else if (strcmp(operacao->tipo, "DISJ")) {
             tipo = "boolean";
-            break;
       }
 
       if ((strcmp(primeiro_fator->tipo, tipo) == 0) && (strcmp(primeiro_fator->tipo, segundo_fator->tipo) == 0)) {
-         geraCodigo(NULL, instrucao_operador_baixa);
+         geraCodigo(NULL, operacao->tipo);
          empilha_variavel(pilha_var, tipo);
       } else {
-         imprimeErro("1 -Operacao entre variaveis de tipos diferentes");
+         imprimeErro("Operacao entre variaveis de tipos diferentes");
       }
       free(primeiro_fator);
       free(segundo_fator);
@@ -387,22 +432,20 @@ expressao_simples: expressao_simples operador_baixa_precedencia termo {
 
 termo: termo operador_alta_precedencia fator {
       primeiro_fator = desempilha_variavel(pilha_var);
+      PilhaVariaveis *operacao = desempilha_variavel(pilha_var);
       segundo_fator = desempilha_variavel(pilha_var);
 
       char *tipo;
-      switch (tipo_operacao) {
-         case 'A':
+      if ((strcmp(operacao->tipo, "MULT") == 0) || (strcmp(operacao->tipo, "DIVI") == 0)) {
             tipo = "integer";
-            break;
-         case 'B':
+      } else if (strcmp(operacao->tipo, "CONJ")) {
             tipo = "boolean";
-            break;
       }
       if ((strcmp(primeiro_fator->tipo, tipo) == 0) && (strcmp(primeiro_fator->tipo, segundo_fator->tipo) == 0)) {
-         geraCodigo(NULL, instrucao_operador_alta);
+         geraCodigo(NULL, operacao->tipo);
          empilha_variavel(pilha_var, tipo);
       } else {
-         imprimeErro("2 -Operacao entre variaveis de tipos diferentes");
+         imprimeErro("Operacao entre variaveis de tipos diferentes");
       }
       free(primeiro_fator);
       free(segundo_fator);
@@ -428,15 +471,74 @@ chamada_funcao_ou_var: IDENT {
          strcat(err_atrib, "' nao existe");
          imprimeErro(err_atrib);
       }
-      
       EnderecoLexico end_atual = variavel_atual->endereco_lexico;
-      int tamanho = strlen("CRVL") + contaDigitos(end_atual.nivel) + contaDigitos(end_atual.deslocamento) + 4;
-      char* instrucao_composta = malloc(tamanho);
-      snprintf(instrucao_composta, tamanho, "%s %d, %d", "CRVL", end_atual.nivel, end_atual.deslocamento);
-      geraCodigo (NULL, instrucao_composta);
-      empilha_variavel(pilha_var, variavel_atual->tipo);
-      free(instrucao_composta);
+      int tamanho;
+      char* instrucao_composta;
+      printf("################################################# %d %s\n", pilha_param->tamanho, variavel_atual->id);
+                     imprime_pilha(pilha_param);
 
+      if (strcmp(variavel_atual->categoria, "function") == 0) {
+         geraCodigo(NULL, "AMEM 1");
+         chamada_funcao = 1;
+         empilha_variavel(pilha_var, variavel_atual->tipo);
+      } else if (pilha_param->tamanho >= 1) {
+         ListaParametros *parametro_formal = busca_parametro_lista(((Procedimento*)procedimento_atual->info_categoria), pilha_param->tamanho);
+         if (strcmp(parametro_formal->passagem, "referencia") == 0) {
+            if ((strcmp(variavel_atual->categoria, "param") == 0) && (strcmp((*(Parametro*)variavel_atual->info_categoria).passagem, "referencia") == 0)) {
+               chamada_funcao = 0;
+               tamanho = strlen("CRVL") + contaDigitos(end_atual.nivel) + contaDigitos(end_atual.deslocamento) + 4;
+               instrucao_composta = malloc(tamanho);
+               snprintf(instrucao_composta, tamanho, "%s %d, %d", "CRVL", end_atual.nivel, end_atual.deslocamento);
+               geraCodigo (NULL, instrucao_composta);
+               empilha_variavel(pilha_var, variavel_atual->tipo);
+               free(instrucao_composta);
+            } else {
+               chamada_funcao = 0;
+               tamanho = strlen("CREN") + contaDigitos(end_atual.nivel) + contaDigitos(end_atual.deslocamento) + 4;
+               instrucao_composta = malloc(tamanho);
+               snprintf(instrucao_composta, tamanho, "%s %d, %d", "CREN", end_atual.nivel, end_atual.deslocamento);
+               geraCodigo (NULL, instrucao_composta);
+               empilha_variavel(pilha_var, variavel_atual->tipo);
+               free(instrucao_composta);
+            }
+         } else  {
+            if ((strcmp(variavel_atual->categoria, "param") == 0) && (strcmp((*(Parametro*)variavel_atual->info_categoria).passagem, "referencia") == 0)) {
+               chamada_funcao = 0;
+               tamanho = strlen("CRVI") + contaDigitos(end_atual.nivel) + contaDigitos(end_atual.deslocamento) + 4;
+               instrucao_composta = malloc(tamanho);
+               snprintf(instrucao_composta, tamanho, "%s %d, %d", "CRVI", end_atual.nivel, end_atual.deslocamento);
+               geraCodigo (NULL, instrucao_composta);
+               empilha_variavel(pilha_var, variavel_atual->tipo);
+               free(instrucao_composta);
+            } else {
+               chamada_funcao = 0;
+               tamanho = strlen("CRVL") + contaDigitos(end_atual.nivel) + contaDigitos(end_atual.deslocamento) + 4;
+               instrucao_composta = malloc(tamanho);
+               snprintf(instrucao_composta, tamanho, "%s %d, %d", "CRVL", end_atual.nivel, end_atual.deslocamento);
+               geraCodigo (NULL, instrucao_composta);
+               empilha_variavel(pilha_var, variavel_atual->tipo);
+               free(instrucao_composta);
+            }
+         }
+      } else {
+         if ((strcmp(variavel_atual->categoria, "param") == 0) && (strcmp((*(Parametro*)variavel_atual->info_categoria).passagem, "referencia") == 0)) {
+            chamada_funcao = 0;
+            tamanho = strlen("CRVI") + contaDigitos(end_atual.nivel) + contaDigitos(end_atual.deslocamento) + 4;
+            instrucao_composta = malloc(tamanho);
+            snprintf(instrucao_composta, tamanho, "%s %d, %d", "CRVI", end_atual.nivel, end_atual.deslocamento);
+            geraCodigo (NULL, instrucao_composta);
+            empilha_variavel(pilha_var, variavel_atual->tipo);
+            free(instrucao_composta);
+         } else {
+            chamada_funcao = 0;
+            tamanho = strlen("CRVL") + contaDigitos(end_atual.nivel) + contaDigitos(end_atual.deslocamento) + 4;
+            instrucao_composta = malloc(tamanho);
+            snprintf(instrucao_composta, tamanho, "%s %d, %d", "CRVL", end_atual.nivel, end_atual.deslocamento);
+            geraCodigo (NULL, instrucao_composta);
+            empilha_variavel(pilha_var, variavel_atual->tipo);
+            free(instrucao_composta);
+         }
+      }
    } chamada_funcao_ou_var_continua
 ;
 
@@ -444,49 +546,50 @@ chamada_funcao_ou_var_continua: chamada_funcao
                                
 ;
 relacao: IGUAL {
-      strcpy(instrucao_relacao, "CMIG");
+      empilha_variavel(pilha_var, "CMIG");
       tipo_operacao = 'B';
+
    } | DESIGUAL {
-      strcpy(instrucao_relacao, "CMDG");
+      empilha_variavel(pilha_var, "CMDG");
       tipo_operacao = 'B';
    } | MENOR {
-      strcpy(instrucao_relacao, "CMME");
+      empilha_variavel(pilha_var, "CMME");
       tipo_operacao = 'B';
    } | MENOR_IGUAL {
-      strcpy(instrucao_relacao, "CMEG");
+      empilha_variavel(pilha_var, "CMEG");
       tipo_operacao = 'B';
    } | MAIOR {
-      strcpy(instrucao_relacao, "CMMA");
+      empilha_variavel(pilha_var, "CMMA");
       tipo_operacao = 'B';
    } | MAIOR_IGUAL {
-      strcpy(instrucao_relacao, "CMAG");
+      empilha_variavel(pilha_var, "CMAG");
       tipo_operacao = 'B';
    }
 ;
 
 operador_baixa_precedencia: ADICAO {
-      strcpy(instrucao_operador_baixa, "SOMA");
       tipo_operacao = 'A';
+      empilha_variavel(pilha_var, "SOMA");
    } | SUBTRACAO {
-      strcpy(instrucao_operador_baixa, "SUBT");
+      empilha_variavel(pilha_var, "SUBT");
       tipo_operacao = 'A';
    } | OR {
-      strcpy(instrucao_operador_alta, "DISJ");
+      empilha_variavel(pilha_var, "DISJ");
       tipo_operacao = 'B';
    }
 ;
 
 operador_alta_precedencia: MULTIPLICACAO {
-      strcpy(instrucao_operador_alta, "MULT");
       tipo_operacao = 'A';
+      empilha_variavel(pilha_var, "MULT");
    } | DIV {
-      strcpy(instrucao_operador_alta, "DIVI");
+      empilha_variavel(pilha_var, "DIVI");
       tipo_operacao = 'A';
    } | DIVISAO {
-      strcpy(instrucao_operador_alta, "DIVI");
+      empilha_variavel(pilha_var, "DIVI");
       tipo_operacao = 'A';
    } | AND {
-      strcpy(instrucao_operador_alta, "CONJ");
+      empilha_variavel(pilha_var, "CONJ");
       tipo_operacao = 'B';
    }
 ;
@@ -518,11 +621,11 @@ comando_condicional: IF {
       gera_rotulo(pilha_rot, rot_desvia);
       empilha_rotulo(pilha_rot, rot_desvia);
    }  expressao {
-      if (tipo_operacao != 'B') {
+      PilhaVariaveis *resultado = desempilha_variavel(pilha_var);
+      if (strcmp(resultado->tipo, "boolean") != 0) {
          imprimeErro("Comando If com expressao não booleana");
       }
       geraCodigo(NULL, formataInstrucaoCompostaString("DSVF", rotulo_desvia(pilha_rot)));
-      imprime_pilha_rotulos(pilha_rot);
    }  THEN comando_sem_rotulo  {
       geraCodigo(NULL, formataInstrucaoCompostaString("DSVS", rotulo_continua(pilha_rot)));
       geraCodigo(rotulo_desvia(pilha_rot), "NADA"); 
@@ -548,15 +651,23 @@ parte_read: parte_read VIRGULA conteudo_read
 
 conteudo_read: IDENT {
       Simbolo *variavel_read = busca(tab_simb, token);
+      int tamanho;
+      char* instrucao_composta;
       if (variavel_read == NULL) {
          char err_atrib[100] = "Leitura invalida: variavel '";
          strcat(err_atrib, token);
          strcat(err_atrib, "' nao existe");
          imprimeErro(err_atrib);
+      } else if ((strcmp(variavel_read->categoria, "param") == 0) && (strcmp((*(Parametro*)variavel_read->info_categoria).passagem, "referencia") == 0)) {
+         geraCodigo(NULL, "LEIT");
+         tamanho = strlen("ARMI") + contaDigitos(variavel_read->endereco_lexico.nivel) + contaDigitos(variavel_read->endereco_lexico.deslocamento) + 4;
+         instrucao_composta = malloc(tamanho);
+         snprintf(instrucao_composta, tamanho, "%s %d, %d", "ARMI", variavel_read->endereco_lexico.nivel,variavel_read->endereco_lexico.deslocamento);
+         geraCodigo (NULL, instrucao_composta);
       } else {
          geraCodigo(NULL, "LEIT");
-         int tamanho = strlen("ARMZ") + contaDigitos(variavel_read->endereco_lexico.nivel) + contaDigitos(variavel_read->endereco_lexico.deslocamento) + 4;
-         char* instrucao_composta = malloc(tamanho);
+         tamanho = strlen("ARMZ") + contaDigitos(variavel_read->endereco_lexico.nivel) + contaDigitos(variavel_read->endereco_lexico.deslocamento) + 4;
+         instrucao_composta = malloc(tamanho);
          snprintf(instrucao_composta, tamanho, "%s %d, %d", "ARMZ", variavel_read->endereco_lexico.nivel,variavel_read->endereco_lexico.deslocamento);
          geraCodigo (NULL, instrucao_composta);
       }
@@ -568,19 +679,26 @@ parte_write: parte_write VIRGULA conteudo_write
 ;
 
 conteudo_write: IDENT {
-         Simbolo *variavel_write = busca(tab_simb, token);
+      Simbolo *variavel_write = busca(tab_simb, token);
+      char* instrucao_composta;
+      int tamanho;
       if (variavel_write == NULL) {
          char err_atrib[100] = "Impressao invalida: variavel '";
          strcat(err_atrib, token);
          strcat(err_atrib, "' nao existe");
          imprimeErro(err_atrib);
+      } else if ((strcmp(variavel_write->categoria, "param") == 0) && (strcmp((*(Parametro*)variavel_write->info_categoria).passagem, "referencia") == 0)) {
+            tamanho = strlen("CRVI") + contaDigitos(variavel_write->endereco_lexico.nivel) + contaDigitos(variavel_write->endereco_lexico.deslocamento) + 4;
+            instrucao_composta = malloc(tamanho);
+            snprintf(instrucao_composta, tamanho, "%s %d, %d", "CRVI", variavel_write->endereco_lexico.nivel,variavel_write->endereco_lexico.deslocamento);
+            geraCodigo (NULL, instrucao_composta);
       } else {
-         int tamanho = strlen("CRVL") + contaDigitos(variavel_write->endereco_lexico.nivel) + contaDigitos(variavel_write->endereco_lexico.deslocamento) + 4;
-         char* instrucao_composta = malloc(tamanho);
-         snprintf(instrucao_composta, tamanho, "%s %d, %d", "CRVL", variavel_write->endereco_lexico.nivel,variavel_write->endereco_lexico.deslocamento);
-         geraCodigo (NULL, instrucao_composta);
-         geraCodigo(NULL, "IMPR");
+            tamanho = strlen("CRVL") + contaDigitos(variavel_write->endereco_lexico.nivel) + contaDigitos(variavel_write->endereco_lexico.deslocamento) + 4;
+            instrucao_composta = malloc(tamanho);
+            snprintf(instrucao_composta, tamanho, "%s %d, %d", "CRVL", variavel_write->endereco_lexico.nivel,variavel_write->endereco_lexico.deslocamento);
+            geraCodigo (NULL, instrucao_composta);
       }
+         geraCodigo(NULL, "IMPR");
    }
    | STRING {
       char* string = removeAspas(token);
@@ -613,6 +731,10 @@ int main (int argc, char** argv) {
    pilha_rot = cria_pilha_rotulos();
    pilha_var = cria_pilha_variaveis();
    pilha_param = cria_pilha_variaveis();
+   
+   chamada_funcao = 0;
+   parametro_real = 0;
+   parametro_real_funcao = 0;
 
    num_vars = 0;
    num_vars_tipo = 0;
@@ -621,6 +743,7 @@ int main (int argc, char** argv) {
    yyin=fp;
    yyparse();
    imprime_tabela(tab_simb);
+   imprime_pilha(pilha_param);
    
    return 0;
 }
