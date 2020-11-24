@@ -17,11 +17,13 @@ pulo_linha [\n]
 
 descarte [\t ]+
 
-ident [a-zAZ][a-zAZ1-9]*
+ident [a-zA-Z][a-zA-Z0-9]*
 
 numero [0-9]+
 
 comentario "(*".*"*)"
+
+string '[ -&(-~]*'
 
 %%
 
@@ -107,6 +109,12 @@ else { simbolo = simb_else;
           return ELSE;
 }
 
+then { simbolo = simb_then;
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME("then ");
+          return THEN;
+}
+
 while { simbolo = simb_while;
           strncpy (token, yytext, TAM_TOKEN);
           IMPRIME("while ");
@@ -182,10 +190,10 @@ not { simbolo = simb_not;
           return FECHA_PARENTESES;
  }
 
-{ident} { simbolo = simb_identificador; 
+{string} { simbolo = simb_string; 
           strncpy (token, yytext, TAM_TOKEN);
-          IMPRIME(" ident  ");
-          return IDENT;
+          IMPRIME(" string  ");
+          return STRING;
         }
 
    /*******************************************/
@@ -258,25 +266,29 @@ not { simbolo = simb_not;
           return MAIOR_IGUAL; 
 }
 
-\[ { simbolo = simb_abre_colchetes;  
+and { simbolo = simb_and;  
           strncpy (token, yytext, TAM_TOKEN);
-          IMPRIME(" ABRE_COLCHETES ");
-          return ABRE_COLCHETES;
+          IMPRIME(" AND ");
+          return AND;
 }
 
-conjuncao { simbolo = simb_conjuncao;  
+read { simbolo = simb_read;  
           strncpy (token, yytext, TAM_TOKEN);
-          IMPRIME(" CONJUNCAO ");
-          return CONJUNCAO;
+          IMPRIME(" read ");
+          return READ;
 }
 
-\] { simbolo = simb_fecha_colchetes;  
+write { simbolo = simb_write;  
           strncpy (token, yytext, TAM_TOKEN);
-          IMPRIME(" FECHA COLCHETES ");
-          return FECHA_COLCHETES;
+          IMPRIME(" write ");
+          return WRITE;
 }
 
-
+{ident} { simbolo = simb_identificador; 
+          strncpy (token, yytext, TAM_TOKEN);
+          IMPRIME(" ident  ");
+          return IDENT;
+        }
 
 %%
 

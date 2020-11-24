@@ -10,8 +10,9 @@
  * Tipos, prot�tipos e vai�veis globais do compilador
  *
  * ------------------------------------------------------------------- */
-#include "utils/tabela_simbolos/tabela_simbolos.h"
+#include "utils/pilha_rotulos/pilha_rotulos.h"
 #include "utils/pilha_variaveis/pilha_variaveis.h"
+#include "utils/tabela_simbolos/tabela_simbolos.h"
 
 typedef enum simbolos {
     simb_program,
@@ -36,6 +37,7 @@ typedef enum simbolos {
     simb_function,
     simb_if,
     simb_else,
+    simb_then,
     simb_while,
     simb_do,
     simb_or,
@@ -51,9 +53,10 @@ typedef enum simbolos {
     simb_menor_igual,
     simb_maior,
     simb_maior_igual,
-    simb_abre_colchetes,
-    simb_fecha_colchetes,
-    simb_conjuncao
+    simb_and,
+    simb_read,
+    simb_write,
+    simb_string
 } simbolos;
 
 /* -------------------------------------------------------------------

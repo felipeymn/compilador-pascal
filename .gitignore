@@ -5,3 +5,5 @@ compilador.tab*
 compilador.output
 MEPA
 .vscode
+/AvaliaTrabs
+/documentation/ilp.pdf

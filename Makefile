@@ -1,10 +1,12 @@
 $DEPURA=1
 PATHAUX=utils/funcoes_auxiliares/
 PATHTABELA=utils/tabela_simbolos/
-PATHPILHA=utils/pilha_variaveis/
+PATHPILHAVARIAVEL=utils/pilha_variaveis/
+PATHPILHAROTULO=utils/pilha_rotulos/
 
-compilador: lex.yy.c y.tab.c compilador.o tabela_simbolos.o pilha_variaveis.o compilador.h
-	gcc lex.yy.c compilador.tab.c compilador.o tabela_simbolos.o pilha_variaveis.o -o compilador -ll -ly -lc -I utils/funcoes_auxiliares
+
+compilador: lex.yy.c y.tab.c compilador.o tabela_simbolos.o pilha_variaveis.o pilha_rotulos.o compilador.h
+	gcc lex.yy.c compilador.tab.c compilador.o tabela_simbolos.o pilha_variaveis.o pilha_rotulos.o -o compilador -ll -ly -lc -I utils/funcoes_auxiliares
 
 lex.yy.c: compilador.l compilador.h
 	flex compilador.l
@@ -18,8 +20,12 @@ compilador.o : compilador.h $(PATHAUX)compiladorF.c $(PATHAUX)compiladorF.h
 tabela_simbolos.o : $(PATHTABELA)tabela_simbolos.c $(PATHTABELA)tabela_simbolos.h
 	gcc -c utils/tabela_simbolos/tabela_simbolos.c -o tabela_simbolos.o
 
-pilha_variaveis.o : $(PATHPILHA)pilha_variaveis.c $(PATHPILHA)pilha_variaveis.h
+pilha_variaveis.o : $(PATHPILHAVARIAVEL)pilha_variaveis.c $(PATHPILHAVARIAVEL)pilha_variaveis.h
 	gcc -c utils/pilha_variaveis/pilha_variaveis.c -o pilha_variaveis.o
+
+pilha_rotulos.o : $(PATHPILHAROTULO)pilha_rotulos.c $(PATHPILHAROTULO)pilha_rotulos.h
+	gcc -c utils/pilha_rotulos/pilha_rotulos.c -o pilha_rotulos.o
+
 
 clean : 
 	rm -f compilador.tab.* lex.yy.c
